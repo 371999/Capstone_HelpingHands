@@ -1,0 +1,20 @@
+# Use the Node.js base image (version 14)
+FROM node:14
+
+# Create a directory inside the container for the application code
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json to the container
+COPY package*.json ./
+
+# Install dependencies in the container
+RUN npm install
+
+# Copy the entire application code to the container
+COPY . .
+
+# Expose the port that the backend app will listen on
+EXPOSE 5000
+
+# Define the command to start the backend server
+CMD ["node", "index.js"]
