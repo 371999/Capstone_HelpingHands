@@ -13,7 +13,7 @@ terraform {
     subscription_id = "cd06d49d-6ae2-4d2b-82e4-50b2b98f55dd"
     tenant_id       = "ed27b597-cea0-4942-8c6f-40e6a78bf47d"
     resource_group_name  = "myBackendResourceGroup"  # Replace with your resource group
-    storage_account_name = "mystorageaccountz4gj6836"        # Replace with your unique storage account name
+    storage_account_name = "shreyas3799"        # Replace with your unique storage account name
     container_name       = "tfstate"                 # Replace with your container name
     key                  = "dev.tfstate"             # File name for the state in Blob
   }
