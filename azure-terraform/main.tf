@@ -18,7 +18,7 @@ terraform {
     key                  = "dev.tfstate"             # File name for the state in Blob
   }
 }
-
+ 
 resource "azurerm_resource_group" "dev_rg" {
   name     = "myResourceGroup"
   location = "East US"
