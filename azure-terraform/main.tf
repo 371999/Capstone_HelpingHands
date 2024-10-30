@@ -7,7 +7,7 @@ provider "azurerm" {
   tenant_id       = var.tenant_id
 }
 
-terraform {
+terraform {  
   backend "azurerm" {
     resource_group_name  = "myBackendResourceGroup"  
     storage_account_name = "shreyas3799"        
