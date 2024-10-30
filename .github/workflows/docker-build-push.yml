@@ -30,6 +30,35 @@ jobs:
           username: ${{ env.ACR_USERNAME }}
           password: ${{ env.ACR_PASSWORD }}
 
+      - name: Read and Increment Version
+        id: version
+        run: |
+          # Read the current version from the VERSION file
+          VERSION=$(cat VERSION)
+          
+          # Extract the numeric part of the version (e.g., v1 -> 1)
+          VERSION_NUMBER=${VERSION//[!0-9]/}
+          
+          # Increment the version number
+          NEW_VERSION_NUMBER=$((VERSION_NUMBER + 1))
+          
+          # Create the new version tag (e.g., v2)
+          NEW_VERSION="v${NEW_VERSION_NUMBER}"
+          
+          # Save the new version tag to VERSION file
+          echo "${NEW_VERSION}" > VERSION
+          
+          # Make the version available to other steps
+          echo "IMAGE_TAG=${NEW_VERSION}" >> $GITHUB_ENV
+
+      - name: Commit Updated Version File
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@users.noreply.github.com"
+          git add VERSION
+          git commit -m "Increment version to ${IMAGE_TAG}"
+          git push
+
       - name: Determine if frontend changed
         id: frontend_changed
         run: |
@@ -62,22 +91,14 @@ jobs:
             echo "build_backend=false" >> $GITHUB_ENV
           fi
 
-      - name: Set Image Tags
-        run: |
-          # Extract the first 7 characters of the Git SHA for a unique image tag
-          IMAGE_TAG=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
-
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest -f frontend/Dockerfile ./frontend
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -f frontend/Dockerfile ./frontend
           docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG}
-          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
 
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest -f backend/Dockerfile ./backend
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -f backend/Dockerfile ./backend
           docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
-          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:latest
