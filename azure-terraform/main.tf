@@ -6,7 +6,7 @@ provider "azurerm" {
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-}
+} 
 
 terraform {  
   backend "azurerm" {
