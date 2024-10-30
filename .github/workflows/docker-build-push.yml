@@ -64,6 +64,16 @@ jobs:
           git commit -m "Increment version to ${IMAGE_TAG}"
           git push
 
+      - name: Commit Updated Version File
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@users.noreply.github.com"
+          git add VERSION
+          git commit -m "Increment version to ${IMAGE_TAG}"
+          git push https://${GH_PAT}@github.com/371999/Capstone_HelpingHands.git HEAD:${{ github.ref }}
+
       - name: Determine if frontend changed
         id: frontend_changed
         run: |
