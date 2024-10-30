@@ -9,7 +9,7 @@
 # build files
 /dist/
 
-# testing
+# testing 
 /coverage
 
 # next.js
