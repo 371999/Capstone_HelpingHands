@@ -33,6 +33,11 @@ jobs:
       - name: Read and Increment Version
         id: version
         run: |
+          # Check if VERSION file exists; create it with v1 if missing
+          if [ ! -f VERSION ]; then
+            echo "v1" > VERSION
+          fi
+          
           # Read the current version from the VERSION file
           VERSION=$(cat VERSION)
           
