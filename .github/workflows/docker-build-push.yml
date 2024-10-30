@@ -62,14 +62,22 @@ jobs:
             echo "build_backend=false" >> $GITHUB_ENV
           fi
 
+      - name: Set Image Tags
+        run: |
+          # Use short SHA for version tagging
+          IMAGE_TAG=${{ github.sha::7 }}
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest -f frontend/Dockerfile ./frontend
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG}
           docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
 
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest -f backend/Dockerfile ./backend
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest -f backend/Dockerfile ./backend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
           docker push ${{ env.ACR_LOGIN_SERVER }}/backend:latest
