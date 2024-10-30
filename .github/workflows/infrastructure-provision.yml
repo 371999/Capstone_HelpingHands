@@ -1,9 +1,10 @@
+name: Terraform Provisioning
 on:
   push:
     branches:
-      - main   # Triggers when changes are pushed to the main branch
+      - shreyas
     paths:
-      - "azure-terraform/**"  # Only triggers when files in the `azure-terraform` directory are changed
+      - "azure-terraform/**"
   workflow_dispatch:
 
 jobs:
