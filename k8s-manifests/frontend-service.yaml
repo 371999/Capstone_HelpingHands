@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: frontend-namespace
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80           # Port exposed within the cluster
+      targetPort: 80      # Port on the container
+      nodePort: 30080     # Exposes this service on port 30080 for external access
+  type: NodePort
