@@ -1,0 +1,38 @@
+
+name: Configure VM with Ansible
+
+on:
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "ansible-playbooks/**"
+  workflow_dispatch:
+
+jobs:
+  configure-vm:
+    name: Configure VM
+    runs-on: ubuntu-latest
+    env:
+      VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH Key
+        run: |
+          echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      - name: Copy Ansible Playbook to VM
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem ansible-playbooks/install_docker_kubernetes.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      - name: SSH into VM to Install Ansible and Run Playbook
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
+            sudo apt update
+            sudo apt install -y ansible
+            ansible-playbook -i "localhost," -c local /home/azureuser/install_docker_kubernetes.yaml
+          EOF

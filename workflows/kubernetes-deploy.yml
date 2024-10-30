@@ -1,0 +1,61 @@
+
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "k8s-manifests/**"
+      - "frontend/**"
+      - "backend/**"
+  workflow_dispatch:
+
+jobs:
+  deploy-to-kubernetes:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    env:
+      VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH Key
+        run: |
+          echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      - name: Create ACR Image Pull Secret on Kubernetes VM
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
+            kubectl create namespace frontend-namespace || true
+            kubectl create namespace backend-namespace || true
+            kubectl delete secret acr-auth -n frontend-namespace || true
+            kubectl delete secret acr-auth -n backend-namespace || true
+            kubectl create secret docker-registry acr-auth               --docker-server=${{ env.ACR_LOGIN_SERVER }}               --docker-username=${{ env.ACR_USERNAME }}               --docker-password=${{ env.ACR_PASSWORD }}               --docker-email=odl_user_1468642@seneca-caa900naa.cloudlabs.ai               -n frontend-namespace
+            kubectl create secret docker-registry acr-auth               --docker-server=${{ env.ACR_LOGIN_SERVER }}               --docker-username=${{ env.ACR_USERNAME }}               --docker-password=${{ env.ACR_PASSWORD }}               --docker-email=odl_user_1468642@seneca-caa900naa.cloudlabs.ai               -n backend-namespace
+          EOF
+
+      - name: Copy Kubernetes Manifests to VM
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      - name: SSH into VM and Apply Kubernetes Configs
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
+            kubectl apply -f /home/azureuser/frontend-namespace.yaml
+            kubectl apply -f /home/azureuser/backend-namespace.yaml
+            kubectl apply -f /home/azureuser/frontend-pod.yaml
+            kubectl apply -f /home/azureuser/backend-pod.yaml
+            kubectl apply -f /home/azureuser/frontend-replicaset.yaml
+            kubectl apply -f /home/azureuser/backend-replicaset.yaml
+            kubectl apply -f /home/azureuser/frontend-deployment.yaml
+            kubectl apply -f /home/azureuser/backend-deployment.yaml
+            kubectl apply -f /home/azureuser/frontend-service.yaml
+            kubectl apply -f /home/azureuser/backend-service.yaml
+          EOF
