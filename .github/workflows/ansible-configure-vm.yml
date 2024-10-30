@@ -7,7 +7,7 @@ on:
       - shreyas
     paths:
       - "ansible-playbooks/**"
-  workflow_dispatch:
+  workflow_dispatch: 
 
 jobs:
   configure-vm:
