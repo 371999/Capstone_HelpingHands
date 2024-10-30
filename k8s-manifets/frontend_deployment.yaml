@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: my-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: shreyas3799.azurecr.io/frontend1:latest
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: acr-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: my-namespace
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30002
+  selector:
+    app: frontend
