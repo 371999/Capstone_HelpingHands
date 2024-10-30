@@ -24,7 +24,3 @@ variable "tenant_id" {
   type        = string
 }
 
-variable "ssh_public_key" {
-  description = "SSH public key for VM access"
-  type        = string
-}
