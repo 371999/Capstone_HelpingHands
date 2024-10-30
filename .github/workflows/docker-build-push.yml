@@ -1,0 +1,39 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"      # Triggers if frontend code is updated
+      - "backend/**"       # Triggers if backend code is updated
+  workflow_dispatch:      # Allows for manual triggering
+
+jobs:
+  build-and-push-docker:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    env:
+      ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}  # ACR login server
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}          # ACR username
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}          # ACR password
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ env.ACR_USERNAME }}
+          password: ${{ env.ACR_PASSWORD }}
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend1:latest -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend1:latest
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend2:latest -f backend/Dockerfile ./backend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/backend2:latest
