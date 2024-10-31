@@ -6,7 +6,7 @@ on:
     branches:
       - shreyas
     paths:
-      - "k8s-manifests/**"
+      
   workflow_dispatch:
 
 jobs:
