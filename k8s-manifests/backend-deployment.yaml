@@ -5,6 +5,11 @@ metadata:
   namespace: backend
 spec:
   replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: backend
@@ -14,9 +19,9 @@ spec:
         app: backend
     spec:
       containers:
-      - name: backend
-        image: shreyas3799.azurecr.io/backend:v1  # Replace with your backend image URL
-        ports:
-        - containerPort: 8080
+        - name: backend
+          image: shreyas3799.azurecr.io/backend:v1  # Image updated via pipeline
+          ports:
+            - containerPort: 5000
       imagePullSecrets:
-      - name: acr-secret
+        - name: acr-auth
