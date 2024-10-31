@@ -1,4 +1,4 @@
-name: Build and Push Docker Images
+name: Build, Push, and Test Docker Images
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-and-push-docker:
-    name: Build and Push Docker Images
+    name: Build, Push, and Test Docker Images
     runs-on: ubuntu-latest
     env:
       ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
@@ -31,20 +31,17 @@ jobs:
           password: ${{ env.ACR_PASSWORD }}
 
       - name: Set Image Tag
+        id: set_image_tag
         run: |
-          # Use GitHub run number as the image version
           IMAGE_TAG="v${{ github.run_number }}"
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
-      - name: Determine if frontend changed
+      - name: Check if frontend changed
         id: frontend_changed
         run: |
           PREVIOUS_SHA="${{ github.event.before }}"
           CURRENT_SHA="${{ github.sha }}"
-          if [ -z "$PREVIOUS_SHA" ]; then
-            echo "No previous commit; assuming full build required."
-            echo "build_frontend=true" >> $GITHUB_ENV
-          elif git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^frontend/'; then
+          if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^frontend/'; then
             echo "Frontend changed."
             echo "build_frontend=true" >> $GITHUB_ENV
           else
@@ -52,15 +49,12 @@ jobs:
             echo "build_frontend=false" >> $GITHUB_ENV
           fi
 
-      - name: Determine if backend changed
+      - name: Check if backend changed
         id: backend_changed
         run: |
           PREVIOUS_SHA="${{ github.event.before }}"
           CURRENT_SHA="${{ github.sha }}"
-          if [ -z "$PREVIOUS_SHA" ]; then
-            echo "No previous commit; assuming full build required."
-            echo "build_backend=true" >> $GITHUB_ENV
-          elif git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^backend/'; then
+          if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^backend/'; then
             echo "Backend changed."
             echo "build_backend=true" >> $GITHUB_ENV
           else
@@ -71,11 +65,30 @@ jobs:
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -f frontend/Dockerfile ./frontend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG}
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }} -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
 
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -f backend/Dockerfile ./backend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.IMAGE_TAG }} -f backend/Dockerfile ./backend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.IMAGE_TAG }}
+
+      # Test the Docker container locally
+      - name: Run Frontend Docker Container for Testing
+        if: env.build_frontend == 'true'
+        run: |
+          docker run -d -p 3000:3000 ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
+          # Wait a few seconds to ensure the container is running
+          sleep 10
+          # Check if the container is running and accessible
+          curl -f http://localhost:3000 || (echo "Frontend container did not start successfully" && exit 1)
+        
+      - name: Run Backend Docker Container for Testing
+        if: env.build_backend == 'true'
+        run: |
+          docker run -d -p 3001:3000 ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.IMAGE_TAG }}
+          # Wait a few seconds to ensure the container is running
+          sleep 10
+          # Check if the container is running and accessible
+          curl -f http://localhost:3001 || (echo "Backend container did not start successfully" && exit 1)
