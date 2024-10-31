@@ -81,14 +81,14 @@ jobs:
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-         docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.FRONTEND_IMAGE_TAG }} -f frontend/Dockerfile ./frontend
+         docker build -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_TAG }} -f frontend/Dockerfile ./frontend
          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_TAG }}
 
       # Step 7: Build and Push Backend Image
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-         docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.BACKEND_IMAGE_TAG }} -f backend/Dockerfile ./backend
+         docker build -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_TAG }} -f backend/Dockerfile ./backend
          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_TAG }}
 
       # Step 8: Set up SSH Key for accessing the Kubernetes VM
