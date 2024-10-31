@@ -11,7 +11,7 @@ RUN npm install -g pnpm && pnpm install
 # Copy the rest of the application files
 COPY . .
 
-# Build the application
+# Build the application 
 RUN pnpm run build
 
 # Production image for serving the API
