@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: shreyas3799.azurecr.io/backend:v1  # Image updated via pipeline
+          image: shreyas3799.azurecr.io/backend:v41  # Image updated via pipeline
           ports:
             - containerPort: 5000
       imagePullSecrets:
