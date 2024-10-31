@@ -1,4 +1,4 @@
-# Stage 1: Build the backend application
+# Use an official Node.js image as the base image
 FROM node:18-alpine AS builder
 
 # Set working directory
@@ -8,23 +8,25 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install
 
-# Copy the application files and build
+# Copy the rest of the application files
 COPY . .
+
+# Build the application, assuming it's a TypeScript app or has a build step
 RUN pnpm run build
 
-# Stage 2: Production image for serving the backend API
-FROM node:18-alpine
-
+# Production image for serving the API
+FROM node:18-alpine AS production
 WORKDIR /app
 
-# Copy only the necessary built files from the builder stage
+# Copy the built files from the builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY package.json .
+COPY --from=builder /app/package.json ./
 
-# Expose the backend port (make sure it aligns with your K8s service configuration)
-ENV PORT=8080
-EXPOSE 8080
+# Install only production dependencies
+RUN pnpm install --prod
 
-# Start the backend application
+# Expose the port the API runs on
+EXPOSE 5000
+
+# Start the application
 CMD ["node", "dist/index.js"]
