@@ -5,6 +5,11 @@ metadata:
   namespace: frontend
 spec:
   replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: frontend
@@ -14,12 +19,12 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: shreyas3799.azurecr.io/frontend:v35  # Replace with your frontend image URL
-        ports:
-        - containerPort: 80
-        env:
-        - name: BACKEND_URL
-          value: "http://backend-service.backend.svc.cluster.local:8080"  # Internal DNS for backend service
+        - name: frontend
+          image: shreyas3799.azurecr.io/frontend:v1  # Image updated via pipeline
+          ports:
+            - containerPort: 80
+          env:
+            - name: BACKEND_SERVICE_URL
+              value: "http://backend-service.backend.svc.cluster.local:5000"  # Internal URL for backend
       imagePullSecrets:
-      - name: acr-secret
+        - name: acr-auth
