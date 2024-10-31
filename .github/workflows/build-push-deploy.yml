@@ -81,15 +81,15 @@ jobs:
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_TAG }} -f frontend/Dockerfile ./frontend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_TAG }}
+         docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.FRONTEND_IMAGE_TAG }} -f frontend/Dockerfile ./frontend
+         docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.FRONTEND_IMAGE_TAG }}
 
       # Step 7: Build and Push Backend Image
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_TAG }} -f backend/Dockerfile ./backend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_TAG }}
+         docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.BACKEND_IMAGE_TAG }} -f backend/Dockerfile ./backend
+         docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.BACKEND_IMAGE_TAG }}
 
       # Step 8: Set up SSH Key for accessing the Kubernetes VM
       - name: Set up SSH Key
@@ -97,13 +97,15 @@ jobs:
           echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
           chmod 600 ssh_key.pem
 
-      # Step 9: Copy Kubernetes Manifests to VM
+      # Step 9: Copy Kubernetes Manifests to VM (only if build_frontend or build_backend is true)
       - name: Copy Kubernetes Manifests to VM
+        if: env.build_frontend == 'true' || env.build_backend == 'true'
         run: |
           scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
 
       # Step 10: SSH into VM, Create ACR Pull Secrets, and Apply Kubernetes Configs Conditionally
       - name: SSH into VM and Apply Kubernetes Configs with Rolling Update
+        if: env.build_frontend == 'true' || env.build_backend == 'true'
         run: |
           ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
             # Apply namespace YAML files first
