@@ -1,6 +1,6 @@
 
 name: Configure VM with Ansible
-
+ 
 on:
   push:
     branches:
