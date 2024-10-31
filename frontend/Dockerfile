@@ -13,7 +13,7 @@ COPY . .
 
 # Build the application
 RUN pnpm run build
-
+ 
 # Production image for serving the Next.js app
 FROM node:18-alpine AS production
 
