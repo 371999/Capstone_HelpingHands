@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install
 
-# Copy the application files and build
+# Copy the application files and build 
 COPY . .
 RUN pnpm run build
 
