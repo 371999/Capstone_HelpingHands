@@ -14,7 +14,7 @@ RUN pnpm install
 # Copy the rest of the application files
 COPY . .
 
-# Build the application
+# Build the application (ensure build directory)
 RUN pnpm run build
 
 # Production image for serving the Next.js app
@@ -26,7 +26,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy necessary files and dependencies from the builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
@@ -34,4 +34,4 @@ COPY --from=builder /app/package.json ./
 EXPOSE 80
 
 # Start the application
-CMD ["pnpm", "run", "start"]
+CMD ["pnpm", "start"]
