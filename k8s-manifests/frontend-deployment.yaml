@@ -22,9 +22,21 @@ spec:
         - name: frontend
           image: shreyas3799.azurecr.io/frontend:v48  # Image updated via pipeline
           ports:
-            - containerPort: 80
+            - containerPort: 3000  # Updated to match Docker image's exposed port
           env:
             - name: BACKEND_SERVICE_URL
-              value: "http://backend-service.backend.svc.cluster.local:5000"  # Internal URL for backend
+              value: "http://backend-service.backend.svc.cluster.local:5000"  # Internal URL for backend service
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000  # Matches the exposed port in Docker image
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000  # Matches the exposed port in Docker image
+            initialDelaySeconds: 5
+            periodSeconds: 10
       imagePullSecrets:
         - name: acr-auth
