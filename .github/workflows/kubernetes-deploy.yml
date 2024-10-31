@@ -1,4 +1,3 @@
-
 name: Deploy to Kubernetes
 
 on:
@@ -6,7 +5,7 @@ on:
     branches:
       - shreyas
     paths:
-      
+      - "k8s-manifests/**"
   workflow_dispatch:
 
 jobs:
@@ -31,29 +30,66 @@ jobs:
       - name: Create ACR Image Pull Secret on Kubernetes VM
         run: |
           ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
-            kubectl create namespace frontend-namespace || true
-            kubectl create namespace backend-namespace || true
-            kubectl delete secret acr-auth -n frontend-namespace || true
-            kubectl delete secret acr-auth -n backend-namespace || true
-            kubectl create secret docker-registry acr-auth               --docker-server=${{ env.ACR_LOGIN_SERVER }}               --docker-username=${{ env.ACR_USERNAME }}               --docker-password=${{ env.ACR_PASSWORD }}               --docker-email=odl_user_1468642@seneca-caa900naa.cloudlabs.ai               -n frontend-namespace
-            kubectl create secret docker-registry acr-auth               --docker-server=${{ env.ACR_LOGIN_SERVER }}               --docker-username=${{ env.ACR_USERNAME }}               --docker-password=${{ env.ACR_PASSWORD }}               --docker-email=odl_user_1468642@seneca-caa900naa.cloudlabs.ai               -n backend-namespace
+            kubectl create namespace frontend || true
+            kubectl create namespace backend || true
+            kubectl delete secret acr-auth -n frontend || true
+            kubectl delete secret acr-auth -n backend || true
+            kubectl create secret docker-registry acr-auth \
+              --docker-server=${{ env.ACR_LOGIN_SERVER }} \
+              --docker-username=${{ env.ACR_USERNAME }} \
+              --docker-password=${{ env.ACR_PASSWORD }} \
+              --docker-email=odl_user_1468642@seneca-caa900naa.cloudlabs.ai \
+              -n frontend
+            kubectl create secret docker-registry acr-auth \
+              --docker-server=${{ env.ACR_LOGIN_SERVER }} \
+              --docker-username=${{ env.ACR_USERNAME }} \
+              --docker-password=${{ env.ACR_PASSWORD }} \
+              --docker-email=odl_user_1468642@seneca-caa900naa.cloudlabs.ai \
+              -n backend
           EOF
 
-      - name: Copy Kubernetes Manifests to VM
+      - name: Copy Changed Kubernetes Manifests to VM
         run: |
-          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          # Determine which files changed and copy only those to the VM
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "frontend-namespace.yaml"; then
+            scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/frontend-namespace.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          fi
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "backend-namespace.yaml"; then
+            scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/backend-namespace.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          fi
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "frontend-deployment.yaml"; then
+            scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/frontend-deployment.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          fi
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "backend-deployment.yaml"; then
+            scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/backend-deployment.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          fi
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "frontend-service.yaml"; then
+            scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/frontend-service.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          fi
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "backend-service.yaml"; then
+            scp -o "StrictHostKeyChecking=no" -i ssh_key.pem k8s-manifests/backend-service.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          fi
 
-      - name: SSH into VM and Apply Kubernetes Configs
+      - name: SSH into VM and Apply Changed Kubernetes Configs
         run: |
           ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
-            kubectl apply -f /home/azureuser/frontend-namespace.yaml
-            kubectl apply -f /home/azureuser/backend-namespace.yaml
-            kubectl apply -f /home/azureuser/frontend-pod.yaml
-            kubectl apply -f /home/azureuser/backend-pod.yaml
-            kubectl apply -f /home/azureuser/frontend-replicaset.yaml
-            kubectl apply -f /home/azureuser/backend-replicaset.yaml
-            kubectl apply -f /home/azureuser/frontend-deployment.yaml
-            kubectl apply -f /home/azureuser/backend-deployment.yaml
-            kubectl apply -f /home/azureuser/frontend-service.yaml
-            kubectl apply -f /home/azureuser/backend-service.yaml
+            # Apply only the manifests that were copied to the VM
+            if [ -f /home/azureuser/frontend-namespace.yaml ]; then
+              kubectl apply -f /home/azureuser/frontend-namespace.yaml
+            fi
+            if [ -f /home/azureuser/backend-namespace.yaml ]; then
+              kubectl apply -f /home/azureuser/backend-namespace.yaml
+            fi
+            if [ -f /home/azureuser/frontend-deployment.yaml ]; then
+              kubectl apply -f /home/azureuser/frontend-deployment.yaml
+            fi
+            if [ -f /home/azureuser/backend-deployment.yaml ]; then
+              kubectl apply -f /home/azureuser/backend-deployment.yaml
+            fi
+            if [ -f /home/azureuser/frontend-service.yaml ]; then
+              kubectl apply -f /home/azureuser/frontend-service.yaml
+            fi
+            if [ -f /home/azureuser/backend-service.yaml ]; then
+              kubectl apply -f /home/azureuser/backend-service.yaml
+            fi
           EOF
