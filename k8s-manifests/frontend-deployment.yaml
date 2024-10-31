@@ -22,6 +22,6 @@ spec:
         - name: frontend
           image: shreyas3799.azurecr.io/frontend:v52  # Image updated via pipeline
           ports:
-            - containerPort: 80  # Updated to match Docker image's exposed port
+            - containerPort: 3000  # Updated to match Docker image's exposed port
       imagePullSecrets:
         - name: acr-auth
