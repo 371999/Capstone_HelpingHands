@@ -30,15 +30,12 @@ jobs:
           username: ${{ env.ACR_USERNAME }}
           password: ${{ env.ACR_PASSWORD }}
 
-      - name: Set Version Tags Using Run Number
+      - name: Set Image Tags
         run: |
-          # Use GitHub run number for unique and incrementing tags
-          FRONTEND_VERSION="v${{ github.run_number }}"
-          BACKEND_VERSION="v${{ github.run_number }}"
-          
-          # Export these tags for use in later steps
-          echo "FRONTEND_VERSION=${FRONTEND_VERSION}" >> $GITHUB_ENV
-          echo "BACKEND_VERSION=${BACKEND_VERSION}" >> $GITHUB_ENV
+          FRONTEND_IMAGE_TAG="frontend-v${{ github.run_number }}"
+          BACKEND_IMAGE_TAG="backend-v${{ github.run_number }}"
+          echo "FRONTEND_IMAGE_TAG=${FRONTEND_IMAGE_TAG}" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_TAG=${BACKEND_IMAGE_TAG}" >> $GITHUB_ENV
 
       - name: Determine if frontend changed
         id: frontend_changed
@@ -75,11 +72,11 @@ jobs:
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${FRONTEND_VERSION} -f frontend/Dockerfile ./frontend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${FRONTEND_VERSION}
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_TAG }} -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_TAG }}
 
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${BACKEND_VERSION} -f backend/Dockerfile ./backend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${BACKEND_VERSION}
+         docker build -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_TAG }} -f backend/Dockerfile ./backend
+         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_TAG }}
