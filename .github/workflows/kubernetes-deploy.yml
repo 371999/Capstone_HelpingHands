@@ -7,8 +7,6 @@ on:
       - shreyas
     paths:
       - "k8s-manifests/**"
-      - "frontend/**"
-      - "backend/**"
   workflow_dispatch:
 
 jobs:
