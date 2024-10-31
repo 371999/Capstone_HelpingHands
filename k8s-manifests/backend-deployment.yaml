@@ -1,11 +1,8 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-deployment
-  namespace: backend-namespace
-  labels:
-    app: backend
+  namespace: backend
 spec:
   replicas: 3
   selector:
@@ -16,10 +13,10 @@ spec:
       labels:
         app: backend
     spec:
-      imagePullSecrets:
-        - name: acr-auth
       containers:
-      - name: backend-container
-        image: 064686496891.dkr.ecr.us-east-1.amazonaws.com/backend:latest
+      - name: backend
+        image: shreyas3799.azurecr.io/backend:v1  # Replace with your backend image URL
         ports:
-        - containerPort: 5000
+        - containerPort: 8080
+      imagePullSecrets:
+      - name: acr-secret
