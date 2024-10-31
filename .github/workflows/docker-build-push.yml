@@ -32,9 +32,9 @@ jobs:
 
       - name: Set Initial Version Numbers
         run: |
-          # Initialize version numbers for frontend and backend
-          FRONTEND_VERSION="v1"
-          BACKEND_VERSION="v1"
+          # Initialize version numbers for frontend and backend starting from v0
+          FRONTEND_VERSION="v0"
+          BACKEND_VERSION="v0"
           
           # Export version numbers for use in other steps
           echo "FRONTEND_VERSION=${FRONTEND_VERSION}" >> $GITHUB_ENV
