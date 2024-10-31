@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: shreyas3799.azurecr.io/frontend:v1  # Image updated via pipeline
+          image: shreyas3799.azurecr.io/frontend:v40  # Image updated via pipeline
           ports:
             - containerPort: 80
           env:
