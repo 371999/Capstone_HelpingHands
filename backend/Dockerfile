@@ -7,7 +7,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install
 
 COPY . .
-RUN pnpm run build
+RUN pnpm run build 
 
 # Production Stage
 FROM node:18-alpine AS production
