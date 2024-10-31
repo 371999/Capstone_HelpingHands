@@ -1,32 +1,23 @@
-# Stage 1: Build the application
-FROM node:18-alpine AS builder
+# Step 1: Use a Node.js image for building the application
+FROM node:18 AS builder
 
-# Set working directory
+# Step 2: Set working directory and copy project files
 WORKDIR /app
-
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# Copy dependencies files and install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
-
-# Copy all other files and build the application
 COPY . .
-RUN pnpm run build
 
-# Stage 2: Serve the built app with Nginx
-FROM nginx:alpine
+# Step 3: Install dependencies and build the Next.js application
+RUN npm install
+RUN npm run build
 
-# Copy the Next.js build output from the builder stage
-COPY --from=builder /app/.next /usr/share/nginx/html
+# Step 4: Use a lightweight Node.js image for serving the built application
+FROM node:18-alpine AS production
 
-# Copy nginx configuration (if any)
-# Alternatively, you could add an nginx.conf if needed for custom routing
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Step 5: Set working directory and copy over the build artifacts from the builder stage
+WORKDIR /app
+COPY --from=builder /app ./
 
-# Expose the application on port 80
-EXPOSE 80
+# Step 6: Expose the port that the app will run on
+EXPOSE 3000
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Step 7: Start the Next.js application
+CMD ["npm", "run", "start"]
