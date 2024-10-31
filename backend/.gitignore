@@ -7,7 +7,7 @@
 .yarn/install-state.gz
 
 # build files
-/dist/
+/dist/ 
 
 # testing 
 /coverage
