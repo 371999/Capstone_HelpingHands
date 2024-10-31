@@ -1,11 +1,8 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
-  namespace: frontend-namespace
-  labels:
-    app: frontend
+  namespace: frontend
 spec:
   replicas: 3
   selector:
@@ -16,10 +13,13 @@ spec:
       labels:
         app: frontend
     spec:
-      imagePullSecrets:
-        - name: acr-auth
       containers:
-      - name: frontend-container
-        image: 064686496891.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+      - name: frontend
+        image: shreyas3799.azurecr.io/frontend:v35  # Replace with your frontend image URL
         ports:
         - containerPort: 80
+        env:
+        - name: BACKEND_URL
+          value: "http://backend-service.backend.svc.cluster.local:8080"  # Internal DNS for backend service
+      imagePullSecrets:
+      - name: acr-secret
