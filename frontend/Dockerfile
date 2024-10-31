@@ -1,28 +1,37 @@
-# Stage 1: Build the frontend application
+# Use an official Node.js image as the base image
 FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install
+# Install pnpm globally
+RUN npm install -g pnpm
 
-# Copy the application files and build 
+# Copy package files and install dependencies
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+
+# Copy the rest of the application files
 COPY . .
+
+# Build the application
 RUN pnpm run build
 
-# Stage 2: Production image for serving the frontend app
-FROM node:18-alpine
+# Production image for serving the Next.js app
+FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Copy only the built frontend files
-COPY --from=builder /app ./
+# Install pnpm in the production stage
+RUN npm install -g pnpm
 
-# Expose the frontend port (this should match your service configuration)
-ENV PORT=80
+# Copy necessary files and dependencies from the builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
+# Expose the port the app runs on
 EXPOSE 80
 
-# Start the frontend application
+# Start the application
 CMD ["pnpm", "run", "start"]
