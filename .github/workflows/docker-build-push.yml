@@ -21,7 +21,7 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Fetch all history to ensure access to previous commit
+          fetch-depth: 0
 
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
@@ -30,11 +30,15 @@ jobs:
           username: ${{ env.ACR_USERNAME }}
           password: ${{ env.ACR_PASSWORD }}
 
-      - name: Set Image Tag
+      - name: Set Initial Version Numbers
         run: |
-          # Use GitHub run number as the image version
-          IMAGE_TAG="v${{ github.run_number }}"
-          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          # Initialize version numbers for frontend and backend
+          FRONTEND_VERSION="v1"
+          BACKEND_VERSION="v1"
+          
+          # Export version numbers for use in other steps
+          echo "FRONTEND_VERSION=${FRONTEND_VERSION}" >> $GITHUB_ENV
+          echo "BACKEND_VERSION=${BACKEND_VERSION}" >> $GITHUB_ENV
 
       - name: Determine if frontend changed
         id: frontend_changed
@@ -68,14 +72,30 @@ jobs:
             echo "build_backend=false" >> $GITHUB_ENV
           fi
 
+      - name: Increment Frontend Version
+        if: env.build_frontend == 'true'
+        run: |
+          # Retrieve the current frontend version and increment it
+          FRONTEND_VERSION_NUMBER=${FRONTEND_VERSION//[!0-9]/}
+          NEW_FRONTEND_VERSION="v$((FRONTEND_VERSION_NUMBER + 1))"
+          echo "FRONTEND_VERSION=${NEW_FRONTEND_VERSION}" >> $GITHUB_ENV
+
+      - name: Increment Backend Version
+        if: env.build_backend == 'true'
+        run: |
+          # Retrieve the current backend version and increment it
+          BACKEND_VERSION_NUMBER=${BACKEND_VERSION//[!0-9]/}
+          NEW_BACKEND_VERSION="v$((BACKEND_VERSION_NUMBER + 1))"
+          echo "BACKEND_VERSION=${NEW_BACKEND_VERSION}" >> $GITHUB_ENV
+
       - name: Build and Push Frontend Image
         if: env.build_frontend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -f frontend/Dockerfile ./frontend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG}
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${FRONTEND_VERSION} -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${FRONTEND_VERSION}
 
       - name: Build and Push Backend Image
         if: env.build_backend == 'true'
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -f backend/Dockerfile ./backend
-          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${BACKEND_VERSION} -f backend/Dockerfile ./backend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${BACKEND_VERSION}
