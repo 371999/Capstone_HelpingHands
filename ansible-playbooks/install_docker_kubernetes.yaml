@@ -68,7 +68,6 @@
     - name: End play if kind cluster exists
       meta: end_play
       when: "'kind' in kind_check.stdout"
-      ignore_errors: true
 
     - name: Create kind configuration file
       copy:
