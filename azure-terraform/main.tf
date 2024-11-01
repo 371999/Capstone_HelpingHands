@@ -9,7 +9,7 @@ provider "azurerm" {
 }  
  
 terraform {   
-  backend "azurerm" { 
+  backend "azurerm" {  
     client_id       = "dd2f42db-9fe4-4d32-9593-cdf7e597b07a"
     client_secret   = "1mf8Q~N2x1sM_TiFDKCABEGVTgzlPVgCnyZFQb8b"
     subscription_id = "cd06d49d-6ae2-4d2b-82e4-50b2b98f55dd"
