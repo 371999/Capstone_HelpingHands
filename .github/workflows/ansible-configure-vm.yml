@@ -51,7 +51,7 @@ jobs:
             sudo apt update
             sudo apt install -y ansible
             ansible-playbook -i "localhost," -c local /home/azureuser/install_docker_kubernetes.yaml
-EOF
+          EOF
 
       ### Step 4: Log in to Azure Container Registry
       - name: Log in to Azure Container Registry
