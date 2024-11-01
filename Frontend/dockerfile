@@ -5,13 +5,16 @@ FROM node:18 AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Copy package.json to install dependencies
+COPY package.json ./
 
+# Install dependencies
 RUN npm install
 
+# Copy the rest of the project files
 COPY . .
 
-# Build the Next.js application, without exporting it statically
+# Build the Next.js application
 RUN npm run build
 
 # Production stage
@@ -19,6 +22,7 @@ FROM node:18 AS production
 
 WORKDIR /app
 
+# Copy everything from the build stage
 COPY --from=build /app /app
 
 # Expose the port that the app runs on
@@ -26,4 +30,5 @@ EXPOSE 3000
 
 # Start the server
 CMD ["npm", "run", "start"]
+
 
