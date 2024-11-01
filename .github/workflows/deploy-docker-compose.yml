@@ -39,8 +39,8 @@ jobs:
       # Step 4: SSH into VM, perform docker login, and run docker-compose
       - name: SSH into VM and Deploy with Docker Compose
         run: |
-          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << 'EOF'
-            echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
-            cd /home/azureuser/
-            docker compose up -d
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
+          echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+          cd /home/azureuser/
+          docker compose up -d
 EOF
