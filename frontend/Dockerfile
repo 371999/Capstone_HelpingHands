@@ -10,7 +10,7 @@ RUN npm install
 RUN npm run build
 
 # Step 4: Use a lightweight Node.js image for serving the built application
-FROM node:18-alpine AS production
+FROM node:18-alpine AS production 
 
 # Step 5: Set working directory and copy over the build artifacts from the builder stage
 WORKDIR /app
