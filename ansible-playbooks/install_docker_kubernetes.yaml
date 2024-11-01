@@ -7,7 +7,7 @@
     - name: Install required packages for Docker (without cache update)
       apt:
         name: "{{ item }}"
-        state: present 
+        state: present  
         update_cache: no
       loop: 
         - apt-transport-https
