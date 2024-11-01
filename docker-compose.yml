@@ -2,7 +2,7 @@ version: '3'
 
 services:
   backend:
-    image: shreyas3799.azurecr.io/backend:v71  # Replace with your actual backend image path
+    image: shreyas3799.azurecr.io/backend:v35  # Replace with your actual backend image path
     container_name: backend
     ports:
       - "8080:8080"
@@ -12,7 +12,7 @@ services:
       - app-network
 
   frontend:
-    image: shreyas3799.azurecr.io/frontend:v72  # Replace with your actual frontend image path
+    image: shreyas3799.azurecr.io/frontend:v34  # Replace with your actual frontend image path
     container_name: frontend
     ports:
       - "80:3000"
