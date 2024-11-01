@@ -17,6 +17,8 @@ jobs:
       ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
       ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
       ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
     steps:
       - name: Check out the code
         uses: actions/checkout@v2
@@ -79,4 +81,17 @@ jobs:
         run: |
           docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -f backend/Dockerfile ./backend
           docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
-      
+
+      # Step: Set up SSH Key for VM access
+      - name: Set up SSH Key
+        run: |
+          echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      # Step: Copy docker-compose.yml to VM and Run docker login on VM
+      - name: Copy docker-compose.yml to VM and Run docker login
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
+            echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+          EOF
