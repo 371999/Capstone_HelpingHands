@@ -109,7 +109,7 @@ jobs:
       - name: SSH into VM and Deploy Containers
         if: env.proceed == 'true'
         run: |
-          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << 'EOF'
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
             echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
             cd /home/azureuser/
             sed -i 's|shreyas3799.azurecr.io/frontend:.*|shreyas3799.azurecr.io/frontend:${IMAGE_TAG}|g' docker-compose.yml
