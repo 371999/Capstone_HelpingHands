@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  backend:
+  backend:  
     image: shreyas3799.azurecr.io/backend:v35  # Replace with your actual backend image path
     container_name: backend
     ports:
