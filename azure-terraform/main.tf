@@ -1,68 +1,22 @@
-######################
-# Provider Configuration
-######################
-
 provider "azurerm" {
   features {}
-
-  # Use variables or environment variables for authentication
-  client_id       = var.client_id  
-  client_secret   = var.client_secret
-  subscription_id = var.subscription_id 
-  tenant_id       = var.tenant_id
-}
-
-######################
-# Terraform Backend Configuration
-######################
-
+ 
+  client_id       = "dd2f42db-9fe4-4d32-9593-cdf7e597b07a"
+  client_secret   = "1mf8Q~N2x1sM_TiFDKCABEGVTgzlPVgCnyZFQb8b"
+  subscription_id = "cd06d49d-6ae2-4d2b-82e4-50b2b98f55dd" 
+  tenant_id       = "ed27b597-cea0-4942-8c6f-40e6a78bf47d"
+ 
+}     
+ 
 terraform {
   backend "azurerm" {}
 }
-
-######################
-# Variables
-######################
-
-# Azure Credentials (values provided via environment variables or terraform.tfvars)
-variable "client_id" {
-  description = "Azure Client ID"
-  type        = string
-}
-
-variable "client_secret" {
-  description = "Azure Client Secret"
-  type        = string
-  sensitive   = true
-}
-
-variable "subscription_id" {
-  description = "Azure Subscription ID"
-  type        = string
-}
-
-variable "tenant_id" {
-  description = "Azure Tenant ID"
-  type        = string
-}
-
-# SSH Public Key for VM Access
-variable "ssh_public_key" {
-  description = "SSH public key for VM access"
-  type        = string
-}
-
-######################
-# Resource Definitions
-######################
-
-# Resource Group
+ 
 resource "azurerm_resource_group" "dev_rg" {
   name     = "myResourceGroup"
   location = "East US"
 }
 
-# Virtual Network
 resource "azurerm_virtual_network" "dev_vnet" {
   name                = "dev-vnet"
   address_space       = ["10.0.0.0/16"]
@@ -70,7 +24,6 @@ resource "azurerm_virtual_network" "dev_vnet" {
   resource_group_name = azurerm_resource_group.dev_rg.name
 }
 
-# Subnet
 resource "azurerm_subnet" "dev_subnet" {
   name                 = "dev-subnet"
   resource_group_name  = azurerm_resource_group.dev_rg.name
@@ -78,7 +31,6 @@ resource "azurerm_subnet" "dev_subnet" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-# Network Security Group
 resource "azurerm_network_security_group" "dev_nsg" {
   name                = "dev-nsg"
   location            = azurerm_resource_group.dev_rg.location
@@ -144,7 +96,7 @@ resource "azurerm_network_security_group" "dev_nsg" {
     destination_address_prefix = "*"
   }
 
-  # HTTPS inbound rule
+  # New HTTPS inbound rule
   security_rule {
     name                       = "Allow-HTTPS-Inbound"
     priority                   = 1005
@@ -157,7 +109,7 @@ resource "azurerm_network_security_group" "dev_nsg" {
     destination_address_prefix = "*"
   }
 
-  # HTTPS outbound rule
+  # New HTTPS outbound rule
   security_rule {
     name                       = "Allow-HTTPS-Outbound"
     priority                   = 1006
@@ -170,7 +122,7 @@ resource "azurerm_network_security_group" "dev_nsg" {
     destination_address_prefix = "*"
   }
 
-  # Port 8080 inbound rule
+  # New 8080 inbound rule
   security_rule {
     name                       = "Allow-8080-Inbound"
     priority                   = 1007
@@ -183,7 +135,7 @@ resource "azurerm_network_security_group" "dev_nsg" {
     destination_address_prefix = "*"
   }
 
-  # Port 8080 outbound rule
+  # New 8080 outbound rule
   security_rule {
     name                       = "Allow-8080-Outbound"
     priority                   = 1008
@@ -196,8 +148,6 @@ resource "azurerm_network_security_group" "dev_nsg" {
     destination_address_prefix = "*"
   }
 }
-
-# Public IP
 resource "azurerm_public_ip" "dev_public_ip" {
   name                = "dev-public-ip"
   location            = azurerm_resource_group.dev_rg.location
@@ -206,7 +156,6 @@ resource "azurerm_public_ip" "dev_public_ip" {
   sku                 = "Standard"
 }
 
-# Network Interface
 resource "azurerm_network_interface" "dev_nic" {
   name                = "dev-nic"
   location            = azurerm_resource_group.dev_rg.location
@@ -220,13 +169,11 @@ resource "azurerm_network_interface" "dev_nic" {
   }
 }
 
-# Associate NSG to NIC
 resource "azurerm_network_interface_security_group_association" "dev_nic_nsg" {
   network_interface_id      = azurerm_network_interface.dev_nic.id
   network_security_group_id = azurerm_network_security_group.dev_nsg.id
 }
 
-# Linux Virtual Machine
 resource "azurerm_linux_virtual_machine" "dev_vm" {
   name                = "dev-vm"
   resource_group_name = azurerm_resource_group.dev_rg.name
@@ -254,18 +201,14 @@ resource "azurerm_linux_virtual_machine" "dev_vm" {
   }
 }
 
-# Azure Container Registry
 resource "azurerm_container_registry" "acr" {
-  name                = "shreyas3799"  # Ensure this name is globally unique
+  name                = "shreyas3799"
   resource_group_name = azurerm_resource_group.dev_rg.name
   location            = azurerm_resource_group.dev_rg.location
   sku                 = "Basic"
   admin_enabled       = true
 }
 
-######################
-# Outputs
-######################
 
 output "vm_public_ip" {
   value = azurerm_public_ip.dev_public_ip.ip_address
@@ -283,4 +226,9 @@ output "acr_username" {
 output "acr_password" {
   value     = azurerm_container_registry.acr.admin_password
   sensitive = true
+}
+
+variable "ssh_public_key" {
+  description = "SSH public key for VM access"
+  type        = string
 }
