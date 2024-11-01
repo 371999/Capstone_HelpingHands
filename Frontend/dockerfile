@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package.json and pnpm-lock.yaml to install dependencies
 COPY package.json pnpm-lock.yaml ./
 
-# Install PNPM and project dependencies
+# Install PNPM globally and dependencies
 RUN npm install -g pnpm && pnpm install
 
 # Copy all files to the container
@@ -19,6 +19,9 @@ RUN pnpm run build
 # Stage 2: Production
 FROM node:18 AS production
 
+# Install PNPM globally in production stage
+RUN npm install -g pnpm
+
 # Set working directory
 WORKDIR /app
 
@@ -28,11 +31,8 @@ COPY --from=build /app /app
 # Install only production dependencies
 RUN pnpm install --prod
 
-# Expose the port the app runs on
+# Expose the port that the app runs on
 EXPOSE 3000
 
-# Start the application
+# Start the Next.js server in production mode
 CMD ["pnpm", "run", "start"]
-
-
-
