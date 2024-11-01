@@ -29,7 +29,7 @@ COPY --from=builder /app .
 RUN npm install -g pnpm
 
 # Expose the application port (adjust if different)
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
 CMD ["pnpm", "start"]
