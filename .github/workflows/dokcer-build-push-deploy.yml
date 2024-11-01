@@ -37,14 +37,17 @@ jobs:
           FRONTEND_CHANGED=false
           BACKEND_CHANGED=false
 
+          # Check if frontend folder has changes
           if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^frontend/'; then
             FRONTEND_CHANGED=true
           fi
 
+          # Check if backend folder has changes
           if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^backend/'; then
             BACKEND_CHANGED=true
           fi
 
+          # Proceed only if both folders have changes
           if [ "$FRONTEND_CHANGED" = true ] && [ "$BACKEND_CHANGED" = true ]; then
             echo "Both frontend and backend have changed."
             echo "proceed=true" >> $GITHUB_ENV
