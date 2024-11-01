@@ -1,34 +1,29 @@
 # Dockerfile
 
-# Stage 1: Build the Next.js application
+# Build stage
 FROM node:18 AS build
 
 WORKDIR /app
 
-# Copy package.json
-COPY package.json ./
+COPY package.json package-lock.json ./
 
-# Install dependencies
 RUN npm install
 
-# Copy all source files
 COPY . .
 
-# Build the Next.js application
+# Build the Next.js application, without exporting it statically
 RUN npm run build
 
-# Stage 2: Run the application using Node.js
-FROM node:18
+# Production stage
+FROM node:18 AS production
 
 WORKDIR /app
 
-# Copy the built files from the previous stage
 COPY --from=build /app /app
 
-# Install a lightweight HTTP server
-RUN npm install -g serve
-
-# Serve the application
+# Expose the port that the app runs on
 EXPOSE 3000
+
+# Start the server
 CMD ["npm", "run", "start"]
 
