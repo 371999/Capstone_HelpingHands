@@ -1,7 +1,12 @@
 name: Terraform Destroy Infrastructure
 
 on:
-  workflow_dispatch:  # Manual trigger for destroying infrastructure
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "frontend/**"
+      - "backend/**"
 
 jobs:
   destroy-infrastructure:
