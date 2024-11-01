@@ -1,30 +1,40 @@
-# Copy package files
+# Stage 1: Build the application
+FROM node:20 AS builder
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package files to install dependencies
 COPY ./package.json ./
+COPY ./pnpm-lock.yaml ./   # Include pnpm lock file for consistency
 
 # Install pnpm and dependencies
 RUN npm install -g pnpm && pnpm install
 
-# Copy source code and .env file
+# Copy the rest of the application code to the container
 COPY . .
- 
-# Build
+
+# Build the Next.js application
 RUN pnpm build
 
-FROM node:20-alpine
+# Stage 2: Create a lightweight image for production
+FROM node:20-alpine AS production
+
+# Set the working directory
 WORKDIR /app
 
-# Copy necessary files (removing next.config.js since it doesn't exist)
+# Copy only necessary files from the builder stage
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.env ./.env
 
-RUN npm install -g pnpm && pnpm install
+# Install pnpm in the production image for running the app
+RUN npm install -g pnpm
 
+# Expose the application port
 EXPOSE 3000
 
-# Start Next.js
-CMD ["pnpm", "start"]
-
-
+# Start the application
+CMD ["pnpm", "start"]
