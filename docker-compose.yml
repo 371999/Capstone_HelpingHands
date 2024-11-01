@@ -12,10 +12,10 @@ services:
       - app-network
 
   frontend:
-    image: your_azure_artifact_repo/frontend:v72  # Replace with your actual frontend image path
+    image: shreyas3799.azurecr.io/frontend:v72  # Replace with your actual frontend image path
     container_name: frontend
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
       - BACKEND_URL=http://backend:8080
     depends_on:
