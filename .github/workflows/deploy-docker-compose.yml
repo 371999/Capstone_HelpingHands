@@ -53,4 +53,4 @@ jobs:
 
           # Start new Docker containers
           docker compose up -d
-EOF
+          EOF
