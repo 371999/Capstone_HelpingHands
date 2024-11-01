@@ -1,4 +1,4 @@
-name: Configure VM and Deploy with Docker Compose
+name: Configure VM and build,tag,push and deploy with Docker Compose
 
 on:
   push:
