@@ -1,11 +1,11 @@
 # Copy package files
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY ./package.json ./pnpm-lock.yaml ./
 
 # Install pnpm and dependencies
 RUN npm install -g pnpm && pnpm install
 
 # Copy source code and .env file
-COPY frontend/ .
+COPY . .
 
 # Build
 RUN pnpm build
