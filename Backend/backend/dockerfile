@@ -1,0 +1,23 @@
+# Use the official Node.js image as a base
+FROM node:18
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy package.json and pnpm-lock.yaml files
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies using pnpm
+RUN npm install -g pnpm && pnpm install
+
+# Copy the rest of the project files to the container
+COPY . .
+
+# Copy the .env file
+COPY .env /app/.env
+
+# Expose the port the backend will run on
+EXPOSE 8080
+
+# Run the backend server
+CMD ["pnpm", "start"]
