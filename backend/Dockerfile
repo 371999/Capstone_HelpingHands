@@ -3,7 +3,7 @@ FROM node:20 AS builder
 
 # Set the working directory in the container
 WORKDIR /app
-
+ 
 # Copy package.json and pnpm-lock.yaml to install dependencies
 COPY package.json pnpm-lock.yaml ./
  
