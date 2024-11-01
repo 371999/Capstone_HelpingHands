@@ -74,10 +74,17 @@
               listenAddress: "127.0.0.1"
               protocol: TCP
 
+    # Check if kind cluster is already available
+    - name: Check if kind cluster exists
+      shell: kind get clusters
+      register: kind_check
+      changed_when: false
+
     - name: Create kind cluster
       command: kind create cluster --config /home/{{ ansible_user }}/kind-config.yaml
       environment:
         KUBECONFIG: "/home/{{ ansible_user }}/.kube/config"
+      when: kind_check.stdout == ""
       retries: 3
       delay: 10
       register: kind_cluster_status
