@@ -5,7 +5,7 @@ FROM node:18 AS builder
 WORKDIR /app
 COPY . .
 
-# Step 3: Install dependencies and build the Next.js application
+# Step 3: Install dependencies and build the Next.js application 
 RUN npm install
 RUN npm run build
 
