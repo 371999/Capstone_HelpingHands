@@ -81,14 +81,13 @@ jobs:
           docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
       # Step 8: Set up SSH Key for VM access
       - name: Set up SSH Key
-        if: env.proceed == 'true'
         run: |
           echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
           chmod 600 ssh_key.pem
 
       # Step 9: Copy docker-compose.yml to VM
       - name: Copy Docker Compose file to VM
-        if: env.proceed == 'true'
+        
         run: |
           scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
           ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
