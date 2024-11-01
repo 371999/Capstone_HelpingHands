@@ -4,7 +4,7 @@ FROM node:18 AS builder
 # Step 2: Set working directory and copy project files
 WORKDIR /app
 COPY . .
-
+ 
 # Step 3: Install dependencies and build the Next.js application 
 RUN npm install 
 RUN npm run build
