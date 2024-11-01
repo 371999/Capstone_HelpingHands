@@ -1,5 +1,5 @@
 ---
-- name: Install Docker and Setup kind Cluster
+- name: Install Docker and Setup kind Cluster 
   hosts: localhost 
   become: yes   
                
