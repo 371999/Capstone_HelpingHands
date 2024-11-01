@@ -1,7 +1,12 @@
 name: Configure VM and Deploy with Docker Compose
 
 on:
-  workflow_dispatch:  # Manual trigger for this workflow
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "frontend/**"
+      - "backend/**"
 
 jobs:
   configure-vm:
