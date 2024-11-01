@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy package files to install dependencies
 COPY ./package.json ./
-COPY ./pnpm-lock.yaml ./   # Include pnpm lock file for consistency
+
 
 # Install pnpm and dependencies
 RUN npm install -g pnpm && pnpm install
