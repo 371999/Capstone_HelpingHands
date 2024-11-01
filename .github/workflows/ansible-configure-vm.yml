@@ -1,38 +1,137 @@
+name: Configure VM and Deploy Application
 
-name: Configure VM with Ansible
- 
 on:
   push:
     branches:
       - shreyas
     paths:
       - "ansible-playbooks/**"
-  workflow_dispatch: 
+      - "frontend/**"
+      - "backend/**"
+      - "docker-compose.yml"
+  workflow_dispatch:
 
 jobs:
-  configure-vm:
-    name: Configure VM
+  configure-deploy:
+    name: Configure VM and Deploy Application
     runs-on: ubuntu-latest
+
     env:
+      # Azure Container Registry credentials
+      ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      # VM access details
       VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
     steps:
+      ### Step 1: Check out the code
       - name: Check out the code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch all history for diff checks
 
+      ### Step 2: Set up SSH Key for VM access
       - name: Set up SSH Key
         run: |
           echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
           chmod 600 ssh_key.pem
 
+      ### Step 3: Configure VM with Ansible (if Ansible playbook changes)
       - name: Copy Ansible Playbook to VM
+        if: "contains(github.event.head_commit.message, 'ansible-playbooks/')"
         run: |
           scp -o "StrictHostKeyChecking=no" -i ssh_key.pem ansible-playbooks/install_docker_kubernetes.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
 
       - name: SSH into VM to Install Ansible and Run Playbook
+        if: "contains(github.event.head_commit.message, 'ansible-playbooks/')"
         run: |
-          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
             sudo apt update
             sudo apt install -y ansible
             ansible-playbook -i "localhost," -c local /home/azureuser/install_docker_kubernetes.yaml
+EOF
+
+      ### Step 4: Log in to Azure Container Registry
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ env.ACR_USERNAME }}
+          password: ${{ env.ACR_PASSWORD }}
+
+      ### Step 5: Set Image Tag
+      - name: Set Image Tag
+        run: |
+          IMAGE_TAG="v${{ github.run_number }}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      ### Step 6: Determine if frontend changed
+      - name: Determine if frontend changed
+        id: frontend_changed
+        run: |
+          PREVIOUS_SHA="${{ github.event.before }}"
+          CURRENT_SHA="${{ github.sha }}"
+          if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^frontend/'; then
+            echo "build_frontend=true" >> $GITHUB_ENV
+          else
+            echo "build_frontend=false" >> $GITHUB_ENV
+          fi
+
+      ### Step 7: Determine if backend changed
+      - name: Determine if backend changed
+        id: backend_changed
+        run: |
+          PREVIOUS_SHA="${{ github.event.before }}"
+          CURRENT_SHA="${{ github.sha }}"
+          if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^backend/'; then
+            echo "build_backend=true" >> $GITHUB_ENV
+          else
+            echo "build_backend=false" >> $GITHUB_ENV
+          fi
+
+      ### Step 8: Build and Push Frontend Image
+      - name: Build and Push Frontend Image
+        if: env.build_frontend == 'true'
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG}
+
+      ### Step 9: Build and Push Backend Image
+      - name: Build and Push Backend Image
+        if: env.build_backend == 'true'
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -f backend/Dockerfile ./backend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
+
+      ### Step 10: Copy docker-compose.yml to VM
+      - name: Copy docker-compose.yml to VM
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      ### Step 11: SSH into VM, log in to ACR, and deploy containers
+      - name: SSH into VM and Deploy Containers
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          # Log into Azure Container Registry
+          echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+
+          # Navigate to docker-compose file location
+          cd /home/azureuser/
+
+          # Update image tags in docker-compose.yml
+          sed -i "s|shreyas3799.azurecr.io/frontend:.*|shreyas3799.azurecr.io/frontend:${IMAGE_TAG}|g" docker-compose.yml
+          sed -i "s|shreyas3799.azurecr.io/backend:.*|shreyas3799.azurecr.io/backend:${IMAGE_TAG}|g" docker-compose.yml
+
+          # Check if any Docker containers are running
+          if [ \$(docker ps -q | wc -l) -gt 0 ]; then
+            echo "Docker containers are running. Stopping and removing them..."
+            docker compose down
+          else
+            echo "No Docker containers are running."
+          fi
+
+          # Run Docker Compose
+          docker compose up -d
           EOF
