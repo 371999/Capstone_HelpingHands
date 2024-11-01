@@ -6,7 +6,7 @@ on:
       - shreyas
     paths:
       - "ansible-playbooks/**"
-      - "docker-compose.yml"
+      - "docker-compose.yml" 
       - "frontend/**"
       - "backend/**"
   workflow_dispatch:
