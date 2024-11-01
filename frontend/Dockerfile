@@ -6,7 +6,7 @@ RUN npm install -g pnpm && pnpm install
 
 # Copy source code and .env file
 COPY . .
-
+ 
 # Build
 RUN pnpm build
 
