@@ -43,4 +43,4 @@ jobs:
           echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
           cd /home/azureuser/
           docker compose up -d
-EOF
+          EOF
