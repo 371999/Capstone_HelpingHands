@@ -10,72 +10,110 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-push-docker:
+  build-push-deploy:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
+
     env:
       ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
       ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
       ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
     steps:
+      # Step 1: Check out the code
       - name: Check out the code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Fetch all history to ensure access to previous commit
+          fetch-depth: 0  # Fetch all history for diff checks
 
+      # Step 2: Determine if both frontend and backend have changed
+      - name: Check if both frontend and backend changed
+        id: changes_check
+        run: |
+          PREVIOUS_SHA="${{ github.event.before }}"
+          CURRENT_SHA="${{ github.sha }}"
+          FRONTEND_CHANGED=false
+          BACKEND_CHANGED=false
+
+          # Check if frontend folder has changes
+          if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^frontend/'; then
+            FRONTEND_CHANGED=true
+          fi
+
+          # Check if backend folder has changes
+          if [ -z "$PREVIOUS_SHA" ] || git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^backend/'; then
+            BACKEND_CHANGED=true
+          fi
+
+          # Proceed only if both folders have changes
+          if [ "$FRONTEND_CHANGED" = true ] && [ "$BACKEND_CHANGED" = true ]; then
+            echo "Both frontend and backend have changed."
+            echo "proceed=true" >> $GITHUB_ENV
+          else
+            echo "Both frontend and backend have not changed. Skipping pipeline."
+            echo "proceed=false" >> $GITHUB_ENV
+
+      # Step 3: Exit if not both folders changed
+      - name: Exit if not both folders changed
+        if: env.proceed == 'false'
+        run: |
+          echo "Pipeline terminated as both frontend and backend were not modified."
+          exit 0
+
+      # Step 4: Log in to Azure Container Registry
       - name: Log in to Azure Container Registry
+        if: env.proceed == 'true'
         uses: azure/docker-login@v1
         with:
           login-server: ${{ env.ACR_LOGIN_SERVER }}
           username: ${{ env.ACR_USERNAME }}
           password: ${{ env.ACR_PASSWORD }}
 
+      # Step 5: Set Image Tag
       - name: Set Image Tag
+        if: env.proceed == 'true'
         run: |
-          # Use GitHub run number as the image version
           IMAGE_TAG="v${{ github.run_number }}"
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
-      - name: Determine if frontend changed
-        id: frontend_changed
-        run: |
-          PREVIOUS_SHA="${{ github.event.before }}"
-          CURRENT_SHA="${{ github.sha }}"
-          if [ -z "$PREVIOUS_SHA" ]; then
-            echo "No previous commit; assuming full build required."
-            echo "build_frontend=true" >> $GITHUB_ENV
-          elif git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^frontend/'; then
-            echo "Frontend changed."
-            echo "build_frontend=true" >> $GITHUB_ENV
-          else
-            echo "Frontend not changed."
-            echo "build_frontend=false" >> $GITHUB_ENV
-          fi
-
-      - name: Determine if backend changed
-        id: backend_changed
-        run: |
-          PREVIOUS_SHA="${{ github.event.before }}"
-          CURRENT_SHA="${{ github.sha }}"
-          if [ -z "$PREVIOUS_SHA" ]; then
-            echo "No previous commit; assuming full build required."
-            echo "build_backend=true" >> $GITHUB_ENV
-          elif git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" | grep -q '^backend/'; then
-            echo "Backend changed."
-            echo "build_backend=true" >> $GITHUB_ENV
-          else
-            echo "Backend not changed."
-            echo "build_backend=false" >> $GITHUB_ENV
-          fi
-
+      # Step 6: Build and Push Frontend Image
       - name: Build and Push Frontend Image
-        if: env.build_frontend == 'true'
+        if: env.proceed == 'true'
         run: |
           docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG} -f frontend/Dockerfile ./frontend
           docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${IMAGE_TAG}
 
+      # Step 7: Build and Push Backend Image
       - name: Build and Push Backend Image
-        if: env.build_backend == 'true'
+        if: env.proceed == 'true'
         run: |
           docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG} -f backend/Dockerfile ./backend
           docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${IMAGE_TAG}
+
+      # Step 8: Set up SSH Key for VM access
+      - name: Set up SSH Key
+        if: env.proceed == 'true'
+        run: |
+          echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      # Step 9: Copy docker-compose.yml to VM
+      - name: Copy Docker Compose file to VM
+        if: env.proceed == 'true'
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      # Step 10: SSH into VM, log in to ACR, and deploy containers
+      - name: SSH into VM and Deploy Containers
+        if: env.proceed == 'true'
+        shell: bash
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+cd /home/azureuser/
+sed -i "s|shreyas3799.azurecr.io/frontend:.*|shreyas3799.azurecr.io/frontend:${IMAGE_TAG}|g" docker-compose.yml
+sed -i "s|shreyas3799.azurecr.io/backend:.*|shreyas3799.azurecr.io/backend:${IMAGE_TAG}|g" docker-compose.yml
+docker compose up -d
+EOF
