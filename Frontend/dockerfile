@@ -1,24 +1,34 @@
-# frontend/Dockerfile
-FROM node:14
+# Dockerfile
 
-# Create app directory
-WORKDIR /usr/src/app
+# Stage 1: Build the Next.js application
+FROM node:18 AS build
 
-# Install app dependencies
-COPY package*.json ./
+WORKDIR /app
+
+# Copy package.json
+COPY package.json ./
+
+# Install dependencies
 RUN npm install
 
-
+# Copy all source files
 COPY . .
 
-# Build the app
+# Build the Next.js application
 RUN npm run build
 
-# Install serve to serve the build
+# Stage 2: Run the application using Node.js
+FROM node:18
+
+WORKDIR /app
+
+# Copy the built files from the previous stage
+COPY --from=build /app /app
+
+# Install a lightweight HTTP server
 RUN npm install -g serve
 
-# Expose port
+# Serve the application
 EXPOSE 3000
+CMD ["npm", "run", "start"]
 
-# Start the app
-CMD ["serve", "-s", "build"]
