@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for diff checks
 
-      # Step 2: Determine if frontend and backend have both changed
+      # Step 2: Determine if both frontend and backend have changed
       - name: Check if both frontend and backend changed
         id: changes_check
         run: |
@@ -52,7 +52,7 @@ jobs:
             echo "Both frontend and backend have not changed. Skipping pipeline."
             echo "proceed=false" >> $GITHUB_ENV
 
-      # Step 3: Exit if both folders did not change
+      # Step 3: Exit if not both folders changed
       - name: Exit if not both folders changed
         if: env.proceed == 'false'
         run: |
