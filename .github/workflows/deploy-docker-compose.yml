@@ -39,18 +39,18 @@ jobs:
       # Step 4: SSH into VM, perform docker login, check running containers, and run docker-compose
       - name: SSH into VM and Deploy with Docker Compose
         run: |
-          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << EOF
-          echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
-          cd /home/azureuser/
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << 'EOF'
+            echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+            cd /home/azureuser/
 
-          # Check if any Docker containers are running
-          if [ \$(docker ps -q | wc -l) -gt 0 ]; then
-            echo "Docker containers are running. Stopping and removing them..."
-            docker compose down
-          else
-            echo "No Docker containers are running."
-          fi
+            # Check if any Docker containers are running
+            if [ $(docker ps -q | wc -l) -gt 0 ]; then
+              echo "Docker containers are running. Stopping and removing them..."
+              docker compose down
+            else
+              echo "No Docker containers are running."
+            fi
 
-          # Start new Docker containers
-          docker compose up -d
+            # Start new Docker containers
+            docker compose up -d
           EOF
