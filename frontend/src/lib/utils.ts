@@ -5,7 +5,7 @@ import { UserType } from "./dummy-data";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
+ 
 export function getNameFromUser(user: UserType) {
   return `${user.firstName} ${user.lastName}`;
 }
