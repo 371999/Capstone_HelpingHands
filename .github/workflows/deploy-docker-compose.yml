@@ -1,0 +1,46 @@
+name: Deploy Docker Compose Changes
+
+on:
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "docker-compose.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-docker-compose:
+    name: Deploy Docker Compose Changes
+    runs-on: ubuntu-latest
+
+    env:
+      ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    steps:
+      # Step 1: Check out the code
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up SSH Key for VM access
+      - name: Set up SSH Key
+        run: |
+          echo "${{ env.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      # Step 3: Copy docker-compose.yml to VM
+      - name: Copy docker-compose.yml to VM
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      # Step 4: SSH into VM, perform docker login, and run docker-compose
+      - name: SSH into VM and Deploy with Docker Compose
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << 'EOF'
+            echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+            cd /home/azureuser/
+            docker compose up -d
+EOF
