@@ -11,7 +11,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install
 
 # Copy the rest of the application files
-COPY . .
+COPY . . 
 
 # Run TypeScript build if necessary (uncomment if TypeScript build is needed)
 # RUN pnpm run build
