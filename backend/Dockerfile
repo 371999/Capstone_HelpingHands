@@ -3,14 +3,14 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy package files
-COPY backend/package.json ./
+COPY ./package.json ./
 
 # Install dependencies with npm
 RUN npm install
 
 # Copy source code and .env file
-COPY backend/src ./src
-COPY backend/.env ./.env
+COPY ./src ./src
+COPY ./.env ./.env
 
 # Expose port 8080
 EXPOSE 8080
