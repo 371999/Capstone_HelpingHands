@@ -8,6 +8,7 @@ spec:
     app: frontend
   ports:
     - protocol: TCP
-      port: 80           # Internal cluster port
-      targetPort: 3000    # Port on the container your app listens to
-  type: ClusterIP         # Restrict service to cluster-only access
+      port: 80
+      targetPort: 3000  # Must match the application's internal port
+      nodePort: 30080
+  type: NodePort
