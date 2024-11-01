@@ -7,7 +7,7 @@ COPY . .
   
 # Step 3: Install dependencies and build the Next.js application 
 RUN npm install 
-RUN npm run build
+RUN npm run build 
 
 # Step 4: Use a lightweight Node.js image for serving the built application
 FROM node:18-alpine AS production 
