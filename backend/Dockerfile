@@ -9,8 +9,8 @@ COPY ./package.json ./
 RUN npm install
 
 # Copy source code and .env file
-COPY ./src ./src
-COPY ./.env ./.env
+
+COPY . .
 
 # Expose port 8080
 EXPOSE 8080
