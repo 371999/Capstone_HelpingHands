@@ -1,8 +1,12 @@
 name: Configure VM, Build and Push Docker Images, and Deploy with Docker Compose
 
 on:
-  workflow_dispatch:  # Manual trigger
-
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "frontend/**"
+      - "backend/**"
 jobs:
   configure-vm:
     name: Configure VM with Ansible
