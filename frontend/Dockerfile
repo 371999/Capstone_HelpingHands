@@ -22,5 +22,9 @@ COPY --from=builder /app/.env ./.env
 
 RUN npm install -g pnpm && pnpm install
 
+EXPOSE 3000
+
 # Start Next.js
 CMD ["pnpm", "start"]
+
+
