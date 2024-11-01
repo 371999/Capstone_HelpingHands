@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # Step 3: Install dependencies and build the Next.js application 
-RUN npm install
+RUN npm install 
 RUN npm run build
 
 # Step 4: Use a lightweight Node.js image for serving the built application
