@@ -2,14 +2,23 @@ provider "azurerm" {
   features {}
  
   client_id       = "dd2f42db-9fe4-4d32-9593-cdf7e597b07a"
-  client_secret   = "1mf8Q~N2x1sM_TiFDKCABEGVTgzlPVgCnyZFQb8b" 
+  client_secret   = "1mf8Q~N2x1sM_TiFDKCABEGVTgzlPVgCnyZFQb8b"
   subscription_id = "cd06d49d-6ae2-4d2b-82e4-50b2b98f55dd" 
   tenant_id       = "ed27b597-cea0-4942-8c6f-40e6a78bf47d"
  
 }     
  
-terraform {
-  backend "azurerm" {}
+terraform {   
+  backend "azurerm" {  
+    client_id       = "dd2f42db-9fe4-4d32-9593-cdf7e597b07a"
+    client_secret   = "1mf8Q~N2x1sM_TiFDKCABEGVTgzlPVgCnyZFQb8b"
+    subscription_id = "cd06d49d-6ae2-4d2b-82e4-50b2b98f55dd"
+    tenant_id       = "ed27b597-cea0-4942-8c6f-40e6a78bf47d"
+    resource_group_name  = "myBackendResourceGroup"  
+    storage_account_name = "shreyas3799"        
+    container_name       = "tfstate"                 
+    key                  = "dev.tfstate"             
+  }
 }
  
 resource "azurerm_resource_group" "dev_rg" {
@@ -210,6 +219,12 @@ resource "azurerm_container_registry" "acr" {
 }
 
 
+variable "ssh_public_key" {
+  description = "SSH public key for VM access"
+  type        = string
+}
+
+
 output "vm_public_ip" {
   value = azurerm_public_ip.dev_public_ip.ip_address
 }
@@ -226,9 +241,4 @@ output "acr_username" {
 output "acr_password" {
   value     = azurerm_container_registry.acr.admin_password
   sensitive = true
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key for VM access"
-  type        = string
 }
