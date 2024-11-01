@@ -104,8 +104,59 @@ resource "azurerm_network_security_group" "dev_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-}
 
+  # New HTTPS inbound rule
+  security_rule {
+    name                       = "Allow-HTTPS-Inbound"
+    priority                   = 1005
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  # New HTTPS outbound rule
+  security_rule {
+    name                       = "Allow-HTTPS-Outbound"
+    priority                   = 1006
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  # New 8080 inbound rule
+  security_rule {
+    name                       = "Allow-8080-Inbound"
+    priority                   = 1007
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8080"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  # New 8080 outbound rule
+  security_rule {
+    name                       = "Allow-8080-Outbound"
+    priority                   = 1008
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8080"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
 resource "azurerm_public_ip" "dev_public_ip" {
   name                = "dev-public-ip"
   location            = azurerm_resource_group.dev_rg.location
