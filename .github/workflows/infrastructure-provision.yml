@@ -19,8 +19,8 @@ jobs:
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-      BACKEND_RESOURCE_GROUP_NAME: "myBackendResourceGroup"
-      BACKEND_STORAGE_ACCOUNT_NAME: "shreyas3799"  # Must be globally unique
+      BACKEND_RESOURCE_GROUP_NAME: "tfstate-resource-group"
+      BACKEND_STORAGE_ACCOUNT_NAME: "yourstorageaccountname"  # Must be globally unique
       BACKEND_CONTAINER_NAME: "tfstate"
       BACKEND_KEY: "dev.tfstate"
       BACKEND_LOCATION: "eastus"
@@ -32,10 +32,8 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          creds: '{"clientId": "${{ secrets.AZURE_CLIENT_ID }}", "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}", "tenantId": "${{ secrets.AZURE_TENANT_ID }}"}'
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Set up Azure Backend for Terraform State
         run: |
