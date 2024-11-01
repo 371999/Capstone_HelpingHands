@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: shreyas3799.azurecr.io/frontend:v52  # Image updated via pipeline
+          image: shreyas3799.azurecr.io/frontend:v69  # Image updated via pipeline
           ports:
             - containerPort: 3000  # Updated to match Docker image's exposed port
       imagePullSecrets:
