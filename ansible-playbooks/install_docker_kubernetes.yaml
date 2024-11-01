@@ -1,6 +1,6 @@
 ---
 - name: Install Docker and Setup kind Cluster
-  hosts: localhost
+  hosts: localhost 
   become: yes 
              
   tasks:  
