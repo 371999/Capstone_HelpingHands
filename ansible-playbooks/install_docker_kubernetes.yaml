@@ -60,6 +60,16 @@
         dest: /usr/local/bin/kubectl
         mode: '0755'
 
+    - name: Check if kind cluster exists
+      shell: kind get clusters
+      register: kind_check
+      changed_when: false
+
+    - name: End play if kind cluster exists
+      meta: end_play
+      when: "'kind' in kind_check.stdout"
+      ignore_errors: true
+
     - name: Create kind configuration file
       copy:
         dest: /home/{{ ansible_user }}/kind-config.yaml
@@ -74,23 +84,16 @@
               listenAddress: "127.0.0.1"
               protocol: TCP
 
-    # Check if kind cluster is already available
-    - name: Check if kind cluster exists
-      shell: kind get clusters
-      register: kind_check
-      changed_when: false
-
     - name: Create kind cluster
       command: kind create cluster --config /home/{{ ansible_user }}/kind-config.yaml
       environment:
         KUBECONFIG: "/home/{{ ansible_user }}/.kube/config"
-      when: kind_check.stdout == ""
       retries: 3
       delay: 10
       register: kind_cluster_status
       until: kind_cluster_status.rc == 0
 
-    # New tasks to set permissions on the .kube directory and config file
+    # Ensure permissions on the .kube directory and config file
 
     - name: Ensure .kube directory exists
       file:
