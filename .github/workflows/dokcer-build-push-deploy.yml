@@ -93,3 +93,4 @@ jobs:
           scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
           ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
 		   echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+		  EOF
