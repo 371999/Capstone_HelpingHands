@@ -231,7 +231,7 @@ output "vm_public_ip" {
 
 output "acr_login_server" {
   value = azurerm_container_registry.acr.login_server
-  sensitive = true
+  
 }
 
 output "acr_username" {
@@ -241,4 +241,5 @@ output "acr_username" {
 
 output "acr_password" {
   value     = azurerm_container_registry.acr.admin_password
+  sensitive = true
 }
