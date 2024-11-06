@@ -38,11 +38,13 @@ jobs:
       - name: Capture Outputs
         id: outputs
         run: |
-          # Directly capture outputs, using awk to clean any extraneous characters
-          ACR_USERNAME=$(terraform output acr_username | awk '{print $NF}')
-          ACR_PASSWORD=$(terraform output acr_password | awk '{print $NF}')
-          VM_PUBLIC_IP=$(terraform output vm_public_ip | awk '{print $NF}')
-          ACR_LOGIN_SERVER=$(terraform output acr_login_server | awk '{print $NF}')
+          # Get outputs in JSON format and parse each with jq
+          outputs=$(terraform output -json)
+          
+          ACR_USERNAME=$(echo "$outputs" | jq -r '.acr_username.value')
+          ACR_PASSWORD=$(echo "$outputs" | jq -r '.acr_password.value')
+          VM_PUBLIC_IP=$(echo "$outputs" | jq -r '.vm_public_ip.value')
+          ACR_LOGIN_SERVER=$(echo "$outputs" | jq -r '.acr_login_server.value')
 
           # Check if any output failed to capture correctly
           if [[ -z "$ACR_USERNAME" || -z "$ACR_PASSWORD" || -z "$VM_PUBLIC_IP" || -z "$ACR_LOGIN_SERVER" ]]; then
@@ -55,7 +57,7 @@ jobs:
           echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
-          
+
       - name: Update Frontend .env File
         run: |
           cd frontend
