@@ -38,16 +38,14 @@ jobs:
       - name: Capture Outputs
         id: outputs
         run: |
-          # Get outputs in JSON format and parse each with jq
-          outputs=$(terraform output -json)
-          
-          ACR_USERNAME=$(echo "$outputs" | jq -r '.acr_username.value')
-          ACR_PASSWORD=$(echo "$outputs" | jq -r '.acr_password.value')
-          VM_PUBLIC_IP=$(echo "$outputs" | jq -r '.vm_public_ip.value')
-          ACR_LOGIN_SERVER=$(echo "$outputs" | jq -r '.acr_login_server.value')
+          # Capture outputs individually as JSON and parse each
+          ACR_USERNAME=$(terraform output -json acr_username | jq -r '.value' || echo "error")
+          ACR_PASSWORD=$(terraform output -json acr_password | jq -r '.value' || echo "error")
+          VM_PUBLIC_IP=$(terraform output -json vm_public_ip | jq -r '.value' || echo "error")
+          ACR_LOGIN_SERVER=$(terraform output -json acr_login_server | jq -r '.value' || echo "error")
 
           # Check if any output failed to capture correctly
-          if [[ -z "$ACR_USERNAME" || -z "$ACR_PASSWORD" || -z "$VM_PUBLIC_IP" || -z "$ACR_LOGIN_SERVER" ]]; then
+          if [[ "$ACR_USERNAME" == "error" || "$ACR_PASSWORD" == "error" || "$VM_PUBLIC_IP" == "error" || "$ACR_LOGIN_SERVER" == "error" ]]; then
             echo "Error: One or more Terraform outputs failed to retrieve correctly."
             exit 1
           fi
@@ -57,6 +55,7 @@ jobs:
           echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
+
 
       - name: Update Frontend .env File
         run: |
