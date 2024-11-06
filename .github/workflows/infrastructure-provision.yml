@@ -38,30 +38,23 @@ jobs:
       - name: Capture Outputs
         id: outputs
         run: |
-          echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
-          echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
-          echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)" >> $GITHUB_ENV
-          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+          # Capture outputs individually to avoid format issues
+          ACR_USERNAME=$(terraform output -raw acr_username || echo "error")
+          ACR_PASSWORD=$(terraform output -raw acr_password || echo "error")
+          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip || echo "error")
+          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server || echo "error")
 
-      - name: Update GitHub Secrets with Outputs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          declare -A secrets
-          secrets[ACR_USERNAME]="${{ env.ACR_USERNAME }}"
-          secrets[ACR_PASSWORD]="${{ env.ACR_PASSWORD }}"
-          secrets[VM_PUBLIC_IP]="${{ env.VM_PUBLIC_IP }}"
-          secrets[ACR_LOGIN_SERVER]="${{ env.ACR_LOGIN_SERVER }}"
+          # Check if any output failed to capture correctly
+          if [[ "$ACR_USERNAME" == "error" || "$ACR_PASSWORD" == "error" || "$VM_PUBLIC_IP" == "error" || "$ACR_LOGIN_SERVER" == "error" ]]; then
+            echo "Error: One or more Terraform outputs failed to retrieve correctly."
+            exit 1
+          fi
 
-          for key in "${!secrets[@]}"; do
-            value="${secrets[$key]}"
-            curl -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
-                 -H "Accept: application/vnd.github.v3+json" \
-                 -H "Content-Type: application/json" \
-                 https://api.github.com/repos/$REPO/actions/secrets/$key \
-                 -d "$(echo '{}' | jq --arg value "$value" '.encrypted_value = $value')"
-          done
+          # Export outputs to GITHUB_ENV
+          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
+          echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
+          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
 
       - name: Update Frontend .env File
         run: |
