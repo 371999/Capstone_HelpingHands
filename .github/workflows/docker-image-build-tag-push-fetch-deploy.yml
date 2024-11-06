@@ -1,12 +1,10 @@
 name: Configure VM and build,tag,push and deploy with Docker Compose
 
 on:
-  push:
-    branches:
-      - shreyas
-    paths:
-      - "ansible-playbooks/**"
-  workflow_dispatch: 
+  workflow_run:
+    workflows: ["Terraform Provisioning"]  # Name of the first pipeline workflow
+    types:
+      - completed 
 
 jobs:
   configure-vm:
