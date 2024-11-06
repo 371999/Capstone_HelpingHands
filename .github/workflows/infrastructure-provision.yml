@@ -34,3 +34,25 @@ jobs:
         run: |
           cd azure-terraform
           terraform apply -auto-approve
+          
+      - name: Capture Outputs
+        id: outputs
+        run: |
+          echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
+          echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)" >> $GITHUB_ENV
+          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+
+      - name: Update GitHub Secrets with Outputs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needs write permissions
+          REPO: ${{ github.repository }}
+        run: |
+          # Define the secrets to update
+          for secret in ACR_USERNAME ACR_PASSWORD VM_PUBLIC_IP ACR_LOGIN_SERVER; do
+            curl -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 https://api.github.com/repos/$REPO/actions/secrets/$secret \
+                 -d '{"encrypted_value":"'${{ secrets[$secret] }}'"}'
+          done
+
