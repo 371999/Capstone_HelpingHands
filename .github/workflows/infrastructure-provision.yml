@@ -30,10 +30,20 @@ jobs:
           cd azure-terraform
           terraform init
 
-      - name: Terraform Apply
+      - name: Apply Terraform Configuration
         run: |
           cd azure-terraform
           terraform apply -auto-approve
+
+      - name: Refresh Terraform State
+        run: |
+          cd azure-terraform
+          terraform refresh
+
+      - name: Debug Outputs
+        run: |
+          cd azure-terraform
+          terraform output
 
       - name: Capture Outputs
         id: outputs
