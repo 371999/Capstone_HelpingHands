@@ -38,14 +38,14 @@ jobs:
       - name: Capture Outputs
         id: outputs
         run: |
-          # Capture outputs individually to avoid format issues
-          ACR_USERNAME=$(terraform output -raw acr_username || echo "error")
-          ACR_PASSWORD=$(terraform output -raw acr_password || echo "error")
-          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip || echo "error")
-          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server || echo "error")
+          # Directly capture outputs, using awk to clean any extraneous characters
+          ACR_USERNAME=$(terraform output acr_username | awk '{print $NF}')
+          ACR_PASSWORD=$(terraform output acr_password | awk '{print $NF}')
+          VM_PUBLIC_IP=$(terraform output vm_public_ip | awk '{print $NF}')
+          ACR_LOGIN_SERVER=$(terraform output acr_login_server | awk '{print $NF}')
 
           # Check if any output failed to capture correctly
-          if [[ "$ACR_USERNAME" == "error" || "$ACR_PASSWORD" == "error" || "$VM_PUBLIC_IP" == "error" || "$ACR_LOGIN_SERVER" == "error" ]]; then
+          if [[ -z "$ACR_USERNAME" || -z "$ACR_PASSWORD" || -z "$VM_PUBLIC_IP" || -z "$ACR_LOGIN_SERVER" ]]; then
             echo "Error: One or more Terraform outputs failed to retrieve correctly."
             exit 1
           fi
@@ -55,7 +55,7 @@ jobs:
           echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
-
+          
       - name: Update Frontend .env File
         run: |
           cd frontend
