@@ -35,46 +35,13 @@ jobs:
           cd azure-terraform
           terraform apply -auto-approve
 
-      - name: Refresh Terraform State
-        run: |
-          cd azure-terraform
-          terraform refresh
-
-      - name: Debug Outputs
-        run: |
-          cd azure-terraform
-          terraform output
-
       - name: Capture Outputs
-        id: outputs
+        id: capture_outputs
         run: |
-          # Write Terraform outputs to temporary files for each value
-          terraform output -raw acr_username > /tmp/acr_username.txt || echo "error" > /tmp/acr_username.txt
-          terraform output -raw acr_password > /tmp/acr_password.txt || echo "error" > /tmp/acr_password.txt
-          terraform output -raw vm_public_ip > /tmp/vm_public_ip.txt || echo "error" > /tmp/vm_public_ip.txt
-          terraform output -raw acr_login_server > /tmp/acr_login_server.txt || echo "error" > /tmp/acr_login_server.txt
+          # Capture Terraform outputs and store in GitHub environment
+          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)
+          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
 
-          # Read values from temporary files
-          ACR_USERNAME=$(cat /tmp/acr_username.txt)
-          ACR_PASSWORD=$(cat /tmp/acr_password.txt)
-          VM_PUBLIC_IP=$(cat /tmp/vm_public_ip.txt)
-          ACR_LOGIN_SERVER=$(cat /tmp/acr_login_server.txt)
-
-          # Debug: Print non-sensitive outputs to verify values (Sensitive outputs hidden)
-          echo "ACR_USERNAME: [HIDDEN]"   # Do not print sensitive data
-          echo "ACR_PASSWORD: [HIDDEN]"   # Do not print sensitive data
-          echo "VM_PUBLIC_IP: $VM_PUBLIC_IP"
-          echo "ACR_LOGIN_SERVER: $ACR_LOGIN_SERVER"
-
-          # Check if any output failed to capture correctly
-          if [[ "$ACR_USERNAME" == "error" || "$ACR_PASSWORD" == "error" || "$VM_PUBLIC_IP" == "error" || "$ACR_LOGIN_SERVER" == "error" ]]; then
-            echo "Error: One or more Terraform outputs failed to retrieve correctly."
-            exit 1
-          fi
-
-          # Export outputs to GITHUB_ENV
-          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
-          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
 
