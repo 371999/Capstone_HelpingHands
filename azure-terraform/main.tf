@@ -227,19 +227,22 @@ variable "ssh_public_key" {
 
 output "vm_public_ip" {
   value = azurerm_public_ip.dev_public_ip.ip_address
+  description = "The public IP of the VM"
 }
 
 output "acr_login_server" {
   value = azurerm_container_registry.acr.login_server
-  
+  description = "The login server for ACR"
 }
 
 output "acr_username" {
   value     = azurerm_container_registry.acr.admin_username
+  description = "The username for the Azure Container Registry"
   sensitive = true
 }
 
 output "acr_password" {
   value     = azurerm_container_registry.acr.admin_password
+  description = "The password for the Azure Container Registry"
   sensitive = true
 }
