@@ -43,7 +43,7 @@ jobs:
           echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> terraform_outputs.txt
 
       - name: Upload Outputs as Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3  # Updated to v3
         with:
           name: terraform-outputs
           path: terraform_outputs.txt
@@ -54,7 +54,7 @@ jobs:
     needs: provision-infrastructure
     steps:
       - name: Download Outputs Artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3  # Updated to v3
         with:
           name: terraform-outputs
 
@@ -72,14 +72,3 @@ jobs:
                  https://api.github.com/repos/${{ github.repository }}/actions/secrets/$key \
                  -d "{\"encrypted_value\":\"$value\"}"
           done < terraform_outputs.txt
-          
-      - name: Update Frontend .env File
-        run: |
-          cd frontend
-          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-
-      - name: Update Backend .env File
-        run: |
-          cd backend
-          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
