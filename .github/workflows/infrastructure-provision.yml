@@ -38,20 +38,20 @@ jobs:
       - name: Capture Outputs
         id: outputs
         run: |
-          # Capture outputs and isolate values with awk
-          ACR_USERNAME=$(terraform output acr_username | awk -F ' = ' '{print $2}' | tr -d '"')
-          ACR_PASSWORD=$(terraform output acr_password | awk -F ' = ' '{print $2}' | tr -d '"')
+          # Capture non-sensitive and sensitive outputs
+          ACR_USERNAME=$(terraform output -json acr_username | jq -r '.value' || echo "error")
+          ACR_PASSWORD=$(terraform output -json acr_password | jq -r '.value' || echo "error")
           VM_PUBLIC_IP=$(terraform output vm_public_ip | awk -F ' = ' '{print $2}' | tr -d '"')
           ACR_LOGIN_SERVER=$(terraform output acr_login_server | awk -F ' = ' '{print $2}' | tr -d '"')
 
-          # Debug: Print outputs to verify values
-          echo "ACR_USERNAME: $ACR_USERNAME"
-          echo "ACR_PASSWORD: [HIDDEN]"
+          # Debug: Print non-sensitive outputs to verify values (Sensitive outputs hidden)
+          echo "ACR_USERNAME: [HIDDEN]"   # Do not print sensitive data
+          echo "ACR_PASSWORD: [HIDDEN]"   # Do not print sensitive data
           echo "VM_PUBLIC_IP: $VM_PUBLIC_IP"
           echo "ACR_LOGIN_SERVER: $ACR_LOGIN_SERVER"
 
           # Check if any output failed to capture correctly
-          if [[ -z "$ACR_USERNAME" || -z "$ACR_PASSWORD" || -z "$VM_PUBLIC_IP" || -z "$ACR_LOGIN_SERVER" ]]; then
+          if [[ "$ACR_USERNAME" == "error" || "$ACR_PASSWORD" == "error" || -z "$VM_PUBLIC_IP" || -z "$ACR_LOGIN_SERVER" ]]; then
             echo "Error: One or more Terraform outputs failed to retrieve correctly."
             exit 1
           fi
