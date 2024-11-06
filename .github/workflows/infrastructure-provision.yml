@@ -38,7 +38,7 @@ jobs:
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          # Capture Terraform outputs, filtering unexpected lines, and save to a file
+          # Capture Terraform outputs and write them to a file, filtering unexpected lines
           {
             echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip || echo 'error')"
             echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server || echo 'error')"
@@ -51,6 +51,17 @@ jobs:
         with:
           name: terraform-outputs
           path: terraform_outputs.txt
+
+      - name: Update Frontend .env File
+        run: |
+          cd frontend
+          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
+          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
+
+      - name: Update Backend .env File
+        run: |
+          cd backend
+          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
 
   update-secrets:
     name: Update GitHub Secrets with Terraform Outputs
@@ -76,14 +87,3 @@ jobs:
                  https://api.github.com/repos/${{ github.repository }}/actions/secrets/$key \
                  -d "{\"encrypted_value\":\"$value\"}"
           done < terraform_outputs.txt
-          
-      - name: Update Frontend .env File
-        run: |
-          cd frontend
-          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-
-      - name: Update Backend .env File
-        run: |
-          cd backend
-          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
