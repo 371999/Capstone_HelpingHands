@@ -34,7 +34,7 @@ jobs:
         run: |
           cd azure-terraform
           terraform apply -auto-approve
-          
+
       - name: Capture Outputs
         id: outputs
         run: |
@@ -45,15 +45,22 @@ jobs:
 
       - name: Update GitHub Secrets with Outputs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needs write permissions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          # Define the secrets to update
-          for secret in ACR_USERNAME ACR_PASSWORD VM_PUBLIC_IP ACR_LOGIN_SERVER; do
+          declare -A secrets
+          secrets[ACR_USERNAME]="${{ env.ACR_USERNAME }}"
+          secrets[ACR_PASSWORD]="${{ env.ACR_PASSWORD }}"
+          secrets[VM_PUBLIC_IP]="${{ env.VM_PUBLIC_IP }}"
+          secrets[ACR_LOGIN_SERVER]="${{ env.ACR_LOGIN_SERVER }}"
+
+          for key in "${!secrets[@]}"; do
+            value="${secrets[$key]}"
             curl -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
                  -H "Accept: application/vnd.github.v3+json" \
-                 https://api.github.com/repos/$REPO/actions/secrets/$secret \
-                 -d '{"encrypted_value":"'${{ secrets[$secret] }}'"}'
+                 -H "Content-Type: application/json" \
+                 https://api.github.com/repos/$REPO/actions/secrets/$key \
+                 -d "$(echo '{}' | jq --arg value "$value" '.encrypted_value = $value')"
           done
 
       - name: Update Frontend .env File
@@ -61,7 +68,7 @@ jobs:
           cd frontend
           sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
           sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-      
+
       - name: Update Backend .env File
         run: |
           cd backend
