@@ -6,7 +6,7 @@ provider "azurerm" {
   subscription_id = var.subscription_id
   tenant_id       = var.tenant_id
 }
-
+ 
 terraform {
   backend "azurerm" {
     resource_group_name  = "myBackendResourceGroup"
