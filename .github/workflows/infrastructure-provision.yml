@@ -38,12 +38,13 @@ jobs:
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          # Capture Terraform outputs and store in GitHub environment
-          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)
-          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
+          # Capture Terraform outputs by writing each to a temporary file
+          terraform output -raw vm_public_ip > /tmp/vm_public_ip.txt || echo "error" > /tmp/vm_public_ip.txt
+          terraform output -raw acr_login_server > /tmp/acr_login_server.txt || echo "error" > /tmp/acr_login_server.txt
 
-          echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
-          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
+          # Read values from the temporary files and export to GitHub environment
+          echo "VM_PUBLIC_IP=$(cat /tmp/vm_public_ip.txt)" >> $GITHUB_ENV
+          echo "ACR_LOGIN_SERVER=$(cat /tmp/acr_login_server.txt)" >> $GITHUB_ENV
 
       - name: Update Frontend .env File
         run: |
