@@ -38,12 +38,14 @@ jobs:
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          # Capture Terraform outputs and write them to a file
-          echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)" > terraform_outputs.txt
-          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> terraform_outputs.txt
+          # Capture Terraform outputs and write them to a file, filtering unexpected lines
+          {
+            echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip || echo 'error')"
+            echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server || echo 'error')"
+          } | grep -E "^[A-Z_]+=" > terraform_outputs.txt
 
       - name: Upload Outputs as Artifacts
-        uses: actions/upload-artifact@v3  # Updated to v3
+        uses: actions/upload-artifact@v3
         with:
           name: terraform-outputs
           path: terraform_outputs.txt
@@ -54,20 +56,20 @@ jobs:
     needs: provision-infrastructure
     steps:
       - name: Download Outputs Artifact
-        uses: actions/download-artifact@v3  # Updated to v3
+        uses: actions/download-artifact@v3
         with:
           name: terraform-outputs
 
       - name: Update GitHub Secrets
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           # Read outputs from the artifact file and update secrets
           while IFS= read -r line; do
             key=$(echo $line | cut -d '=' -f 1)
             value=$(echo $line | cut -d '=' -f 2)
             echo "Updating secret $key..."
-            curl -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
+            curl -X PUT -H "Authorization: Bearer $PAT_TOKEN" \
                  -H "Accept: application/vnd.github.v3+json" \
                  https://api.github.com/repos/${{ github.repository }}/actions/secrets/$key \
                  -d "{\"encrypted_value\":\"$value\"}"
