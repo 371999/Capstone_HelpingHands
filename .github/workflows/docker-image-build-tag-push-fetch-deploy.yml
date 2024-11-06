@@ -11,6 +11,7 @@ jobs:
     name: Configure VM with Ansible
     runs-on: ubuntu-latest
     needs: provision-infrastructure # Run only after Terraform job completes
+    
     env:
       VM_PUBLIC_IP: ${{ secrets.VM_PUBLIC_IP }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
