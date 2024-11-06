@@ -56,3 +56,13 @@ jobs:
                  -d '{"encrypted_value":"'${{ secrets[$secret] }}'"}'
           done
 
+      - name: Update Frontend .env File
+        run: |
+          cd frontend
+          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
+          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
+      
+      - name: Update Backend .env File
+        run: |
+          cd backend
+          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
