@@ -12,7 +12,7 @@ const RequestSchema = new mongoose.Schema({
     },
     comments: {
         type: String,
-        required: true,
+        required: false,
     },
     userId: {
         type: String,
