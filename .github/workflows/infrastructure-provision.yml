@@ -52,13 +52,26 @@ jobs:
       - name: Extract Outputs and Set Environment Variables
         id: extract_outputs
         run: |
+          # Debugging: Print raw JSON for analysis
+          echo "=== Printing terraform_outputs.json ==="
+          cat terraform_outputs.json
+          echo "=== End of terraform_outputs.json ==="
+          
+          # Check if jq command is available and the JSON file is present
+          which jq || echo "jq is not installed or not found in PATH"
+          [ -f terraform_outputs.json ] || (echo "File terraform_outputs.json not found" && exit 1)
+
           # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
           ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
-
-          # Handle sensitive outputs carefully
           ACR_USERNAME=$(jq -r '.acr_username.value' terraform_outputs.json)
           ACR_PASSWORD=$(jq -r '.acr_password.value' terraform_outputs.json)
+
+          # Debug the extracted values to make sure they're correct
+          echo "Extracted VM_PUBLIC_IP: $VM_PUBLIC_IP"
+          echo "Extracted ACR_LOGIN_SERVER: $ACR_LOGIN_SERVER"
+          echo "Extracted ACR_USERNAME: $ACR_USERNAME"
+          echo "Extracted ACR_PASSWORD: [REDACTED]"
 
           # Base64 encode sensitive values before storing them
           ACR_USERNAME_BASE64=$(echo -n "$ACR_USERNAME" | base64)
