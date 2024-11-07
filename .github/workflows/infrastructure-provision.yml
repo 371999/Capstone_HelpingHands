@@ -40,14 +40,11 @@ jobs:
         run: |
           cd azure-terraform
 
-          # Capture Terraform outputs as JSON
-          terraform output -json > terraform_outputs.json
-
-          # Extract outputs from JSON file using jq
-          VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
-          ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
-          ACR_USERNAME=$(jq -r '.acr_username.value' terraform_outputs.json)
-          ACR_PASSWORD=$(jq -r '.acr_password.value' terraform_outputs.json)
+          # Capture outputs directly from terraform output command
+          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)
+          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
+          ACR_USERNAME=$(terraform output -raw acr_username)
+          ACR_PASSWORD=$(terraform output -raw acr_password)
 
           # Debug the extracted values to make sure they're correct
           echo "Extracted VM_PUBLIC_IP: $VM_PUBLIC_IP"
