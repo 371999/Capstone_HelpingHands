@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const DB_NAME = "HelpingHands1";
+const DB_NAME = "HelpingHands";
 const DB_URI = `${process.env.MONGODB_URI}`
 
 let db: Db;
@@ -15,7 +15,7 @@ export const connectDB = async () => {
     console.log('MongoDB connected');
   } catch (err: any) {
     console.error(err.message);
-    process.exit();
+    process.exit(1);
   }
 };
 
