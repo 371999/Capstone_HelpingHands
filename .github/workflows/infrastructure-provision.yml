@@ -38,13 +38,11 @@ jobs:
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          # Capture Terraform outputs and write them to a file, filtering unexpected lines
-          {
-            echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip || echo 'error')"
-            echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server || echo 'error')"
-            echo "ACR_USERNAME=$(terraform output -raw acr_username || echo 'error')"
-            echo "ACR_PASSWORD=$(terraform output -raw acr_password || echo 'error')"
-          } | grep -E "^[A-Z_]+=" > terraform_outputs.txt
+          # Capture Terraform outputs and write them to a file
+          echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)" > terraform_outputs.txt
+          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> terraform_outputs.txt
+          echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> terraform_outputs.txt
+          echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> terraform_outputs.txt
 
       - name: Upload Outputs as Artifacts
         uses: actions/upload-artifact@v3
@@ -58,7 +56,12 @@ jobs:
           # Extract the IP and save to GITHUB_ENV
           VM_PUBLIC_IP=$(grep 'VM_PUBLIC_IP=' terraform_outputs.txt | cut -d '=' -f2)
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
-      
+        shell: bash
+
+      - name: Debug VM_PUBLIC_IP
+        run: |
+          echo "VM_PUBLIC_IP is: ${{ env.VM_PUBLIC_IP }}"
+
       - name: Update Frontend .env File
         run: |
           cd frontend
