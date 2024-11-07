@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  provision-infrastructure:
+  provision-infrastructure: 
     name: Provision Infrastructure with Terraform
     runs-on: ubuntu-latest
     env:
@@ -23,101 +23,52 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v1
 
       - name: Terraform Init
         run: |
-          terraform -chdir=azure-terraform init
+          cd azure-terraform
+          terraform init
 
       - name: Apply Terraform Configuration
         run: |
-          terraform -chdir=azure-terraform apply -auto-approve
+          cd azure-terraform
+          terraform apply -auto-approve
 
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          # Ensure a clean output by removing any existing file
-          rm -f terraform_outputs.json
-          terraform -chdir=azure-terraform output -json > terraform_outputs.json
-          
-          # Validate JSON file to catch any non-JSON content
-          if ! jq empty terraform_outputs.json; then
-            echo "Error: terraform_outputs.json contains invalid JSON."
-            cat terraform_outputs.json  # Output file content for debugging
-            exit 1
-          fi
-        shell: bash
+          # Capture Terraform outputs and write them to a file, filtering unexpected lines
+          {
+            echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip || echo 'error')"
+            echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server || echo 'error')"
+            echo "ACR_USERNAME=$(terraform output -raw acr_username || echo 'error')"
+            echo "ACR_PASSWORD=$(terraform output -raw acr_password || echo 'error')"
+          } | grep -E "^[A-Z_]+=" > terraform_outputs.txt
 
-      - name: Upload Terraform Outputs Artifact
+      - name: Upload Outputs as Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: terraform-outputs
-          path: terraform_outputs.json
+          path: terraform_outputs.txt
 
-      - name: Extract Outputs and Set Environment Variables
-        id: extract_outputs
+      - name: Extract VM Public IP from Artifact
+        id: extract_ip
         run: |
-          # Print JSON file to confirm content
-          echo "Contents of terraform_outputs.json:"
-          cat terraform_outputs.json
-
-          # Extract outputs from JSON file using jq
-          VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
-          ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
-          ACR_USERNAME=$(jq -r '.acr_username.value' terraform_outputs.json)
-          ACR_PASSWORD=$(jq -r '.acr_password.value' terraform_outputs.json)
-
-          # Output extracted values for verification (mask sensitive info as needed)
-          echo "Extracted VM_PUBLIC_IP: $VM_PUBLIC_IP"
-          echo "Extracted ACR_LOGIN_SERVER: $ACR_LOGIN_SERVER"
-          echo "Extracted ACR_USERNAME: $ACR_USERNAME"
-          echo "Extracted ACR_PASSWORD: [REDACTED]"
-
-          # Set environment variables for later steps
+          # Extract the IP and save to GITHUB_ENV
+          VM_PUBLIC_IP=$(grep 'VM_PUBLIC_IP=' terraform_outputs.txt | cut -d '=' -f2)
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
-          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
-          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
-          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Debug Environment Variables
-        run: |
-          echo "VM_PUBLIC_IP: ${{ env.VM_PUBLIC_IP }}"
-          echo "ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}"
-          echo "ACR_USERNAME: [HIDDEN]"
-          echo "ACR_PASSWORD: [HIDDEN]"
-        shell: bash
-
+      
       - name: Update Frontend .env File
         run: |
-          if [ -d "frontend" ]; then
-            cd frontend
-            sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-            sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-          else
-            echo "Directory 'frontend' not found. Skipping update."
-          fi
-        shell: bash
+          cd frontend
+          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
+          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
 
       - name: Update Backend .env File
         run: |
-          if [ -d "backend" ]; then
-            cd backend
-            sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
-          else
-            echo "Directory 'backend' not found. Skipping update."
-          fi
-        shell: bash
-
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add frontend/.env backend/.env
-          git commit -m "Update .env files with VM public IP and ACR details" || echo "No changes to commit"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cd backend
+          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
 
   update-secrets:
     name: Update GitHub Secrets with Terraform Outputs
@@ -129,26 +80,17 @@ jobs:
         with:
           name: terraform-outputs
 
-      - name: Extract Outputs and Update GitHub Secrets
+      - name: Update GitHub Secrets
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # Confirm artifact presence
-          echo "Current directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -l
-
-          # Validate and update secrets if JSON is intact
-          if [ ! -s terraform_outputs.json ]; then
-            echo "Error: terraform_outputs.json is empty or does not exist."
-            exit 1
-          fi
-
-          # Read outputs and update secrets
-          jq -r 'to_entries[] | "\(.key)=\(.value.value)"' terraform_outputs.json | while IFS='=' read -r key value; do
+          # Read outputs from the artifact file and update secrets
+          while IFS= read -r line; do
+            key=$(echo $line | cut -d '=' -f 1)
+            value=$(echo $line | cut -d '=' -f 2)
             echo "Updating secret $key..."
-            curl -X PUT -H "Authorization: token $PAT_TOKEN" \
+            curl -X PUT -H "Authorization: Bearer $PAT_TOKEN" \
                  -H "Accept: application/vnd.github.v3+json" \
                  https://api.github.com/repos/${{ github.repository }}/actions/secrets/$key \
                  -d "{\"encrypted_value\":\"$value\"}"
-          done
+          done < terraform_outputs.txt
