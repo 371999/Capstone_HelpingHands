@@ -52,14 +52,16 @@ jobs:
       - name: Extract Outputs and Set Environment Variables
         id: extract_outputs
         run: |
-          # Debugging: Print raw JSON for analysis
-          echo "=== Printing terraform_outputs.json ==="
-          cat terraform_outputs.json
-          echo "=== End of terraform_outputs.json ==="
-          
-          # Check if jq command is available and the JSON file is present
-          which jq || echo "jq is not installed or not found in PATH"
-          [ -f terraform_outputs.json ] || (echo "File terraform_outputs.json not found" && exit 1)
+          # Print the first few lines of terraform_outputs.json to understand its structure
+          echo "=== Printing first few lines of terraform_outputs.json ==="
+          head terraform_outputs.json
+          echo "=== End of printed lines ==="
+
+          # Check if the JSON is valid
+          if ! jq empty terraform_outputs.json; then
+            echo "Error: terraform_outputs.json is not valid JSON."
+            exit 1
+          fi
 
           # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
@@ -84,13 +86,6 @@ jobs:
           echo "ACR_PASSWORD_BASE64=$ACR_PASSWORD_BASE64" >> $GITHUB_ENV
         shell: bash
 
-      - name: Debug Environment Variables
-        run: |
-          echo "VM_PUBLIC_IP: ${{ env.VM_PUBLIC_IP }}"
-          echo "ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}"
-          echo "ACR_USERNAME: [HIDDEN]"
-          echo "ACR_PASSWORD: [HIDDEN]"
-        shell: bash
 
       - name: Update Frontend .env File
         run: |
