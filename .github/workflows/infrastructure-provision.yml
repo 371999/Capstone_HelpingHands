@@ -92,8 +92,8 @@ jobs:
       ACR_LOGIN_SERVER: ${{ needs.provision-infrastructure.outputs.ACR_LOGIN_SERVER }}
       ACR_NAME: ${{ needs.provision-infrastructure.outputs.ACR_NAME }}
       VM_PUBLIC_IP: ${{ needs.provision-infrastructure.outputs.VM_PUBLIC_IP }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
     outputs:
       IMAGE_TAG: ${{ steps.set_image_tag.outputs.IMAGE_TAG }}
@@ -151,8 +151,8 @@ jobs:
       VM_PUBLIC_IP: ${{ needs.provision-infrastructure.outputs.VM_PUBLIC_IP }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       IMAGE_TAG: ${{ needs.build-and-push-docker.outputs.IMAGE_TAG }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
     steps:
       - name: Check out the code
