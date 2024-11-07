@@ -92,10 +92,6 @@ jobs:
       ACR_LOGIN_SERVER: ${{ needs.provision-infrastructure.outputs.ACR_LOGIN_SERVER }}
       ACR_NAME: ${{ needs.provision-infrastructure.outputs.ACR_NAME }}
       VM_PUBLIC_IP: ${{ needs.provision-infrastructure.outputs.VM_PUBLIC_IP }}
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     outputs:
       IMAGE_TAG: ${{ steps.set_image_tag.outputs.IMAGE_TAG }}
@@ -118,14 +114,14 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Log in to Azure Container Registry
         run: |
-          echo "${{ env.AZURE_CLIENT_SECRET }}" | docker login $ACR_LOGIN_SERVER -u "${{ env.AZURE_CLIENT_ID }}" --password-stdin
+          echo ${{ secrets.AZURE_CREDENTIALS }} > azure_credentials.json
+          CLIENT_ID=$(jq -r .clientId azure_credentials.json)
+          CLIENT_SECRET=$(jq -r .clientSecret azure_credentials.json)
+          echo "$CLIENT_SECRET" | docker login $ACR_LOGIN_SERVER -u "$CLIENT_ID" --password-stdin
 
       - name: Set Image Tag
         id: set_image_tag
@@ -153,8 +149,6 @@ jobs:
       VM_PUBLIC_IP: ${{ needs.provision-infrastructure.outputs.VM_PUBLIC_IP }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       IMAGE_TAG: ${{ needs.build-and-push-docker.outputs.IMAGE_TAG }}
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
     steps:
       - name: Check out the code
@@ -174,7 +168,10 @@ jobs:
       - name: SSH into VM and Deploy with Docker Compose
         run: |
           ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@$VM_PUBLIC_IP << 'EOF'
-            echo "${{ env.AZURE_CLIENT_SECRET }}" | docker login $ACR_LOGIN_SERVER -u "${{ env.AZURE_CLIENT_ID }}" --password-stdin
+            echo ${{ secrets.AZURE_CREDENTIALS }} > azure_credentials.json
+            CLIENT_ID=$(jq -r .clientId azure_credentials.json)
+            CLIENT_SECRET=$(jq -r .clientSecret azure_credentials.json)
+            echo "$CLIENT_SECRET" | docker login $ACR_LOGIN_SERVER -u "$CLIENT_ID" --password-stdin
             cd /home/azureuser/
             if [ $(docker ps -q | wc -l) -gt 0 ]; then
               docker compose down
