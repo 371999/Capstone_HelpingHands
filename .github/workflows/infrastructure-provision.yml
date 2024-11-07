@@ -99,7 +99,7 @@ jobs:
   build-and-push-docker:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
-    needs: provision-infrastructure
+    needs: configure-vm
     env:
       ACR_LOGIN_SERVER: ${{ needs.provision-infrastructure.outputs.ACR_LOGIN_SERVER }}
       ACR_USERNAME: ${{ needs.provision-infrastructure.outputs.ACR_USERNAME }}
