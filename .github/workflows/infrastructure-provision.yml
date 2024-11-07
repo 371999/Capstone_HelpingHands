@@ -1,10 +1,12 @@
-name: Terraform Provisioning
+name: Terraform Provisioning and Docker Deployment
+
 on:
   push:
     branches:
       - shreyas
     paths:
       - "azure-terraform/**"
+      - "docker-compose.yml"
   workflow_dispatch:
 
 jobs:
@@ -64,47 +66,109 @@ jobs:
           echo "ACR_PASSWORD=$ACR_PASSWORD_ENCODED" >> $GITHUB_ENV
         shell: bash
 
-      - name: Update Frontend .env File
-        run: |
-          cd frontend
-          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-        shell: bash
-
-      - name: Update Backend .env File
-        run: |
-          cd backend
-          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
-        shell: bash
-
-  update-secrets:
-    name: Update GitHub Secrets with Terraform Outputs
+  configure-vm:
+    name: Configure VM with Ansible
     runs-on: ubuntu-latest
     needs: provision-infrastructure
-    steps:
-      - name: Update GitHub Secrets
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          VM_PUBLIC_IP: ${{ env.VM_PUBLIC_IP }}
-          ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}
-          ACR_USERNAME: ${{ env.ACR_USERNAME }}
-          ACR_PASSWORD: ${{ env.ACR_PASSWORD }}
-        run: |
-          # Update the GitHub repository secrets
-          declare -A secrets=(
-            ["VM_PUBLIC_IP"]="$VM_PUBLIC_IP"
-            ["ACR_LOGIN_SERVER"]="$ACR_LOGIN_SERVER"
-            ["ACR_USERNAME"]="$ACR_USERNAME"
-            ["ACR_PASSWORD"]="$ACR_PASSWORD"
-          )
+    env:
+      VM_PUBLIC_IP: ${{ env.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-          for key in "${!secrets[@]}"; do
-            value="${secrets[$key]}"
-            echo "Updating secret $key..."
-            curl -X PUT -H "Authorization: Bearer $PAT_TOKEN" \
-                 -H "Accept: application/vnd.github.v3+json" \
-                 -H "Content-Type: application/json" \
-                 https://api.github.com/repos/${{ github.repository }}/actions/secrets/$key \
-                 -d "{\"encrypted_value\":\"$value\"}"
-          done
-        shell: bash
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH Key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      - name: Copy Ansible Playbook to VM
+        run: |
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem ansible-playbooks/install_docker_kubernetes.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      - name: SSH into VM to Install Ansible and Run Playbook
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << 'EOF'
+            sudo apt update
+            sudo apt install -y ansible
+            ansible-playbook -i "localhost," -c local /home/azureuser/install_docker_kubernetes.yaml
+          EOF
+
+  build-and-push-docker:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: configure-vm
+    env:
+      ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}
+      ACR_USERNAME: ${{ env.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ env.ACR_PASSWORD }}
+
+    outputs:
+      IMAGE_TAG: ${{ steps.set_image_tag.outputs.IMAGE_TAG }}
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ env.ACR_USERNAME }}
+          password: ${{ env.ACR_PASSWORD }}
+
+      - name: Set Image Tag
+        id: set_image_tag
+        run: |
+          IMAGE_TAG="v${{ github.run_number }}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "::set-output name=IMAGE_TAG::${IMAGE_TAG}"
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }} -f frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.IMAGE_TAG }} -f backend/Dockerfile ./backend
+          docker push ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.IMAGE_TAG }}
+
+  deploy-docker-compose:
+    name: Deploy Docker Compose Changes
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker
+    env:
+      ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}
+      ACR_USERNAME: ${{ env.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ env.ACR_PASSWORD }}
+      VM_PUBLIC_IP: ${{ env.VM_PUBLIC_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      IMAGE_TAG: ${{ needs.build-and-push-docker.outputs.IMAGE_TAG }}
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH Key for VM access
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+
+      - name: Copy and Update docker-compose.yml to VM
+        run: |
+          sed -i "s|image: .*/frontend:.*|image: ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}|g" docker-compose.yml
+          sed -i "s|image: .*/backend:.*|image: ${{ env.ACR_LOGIN_SERVER }}/backend:${{ env.IMAGE_TAG }}|g" docker-compose.yml
+          scp -o "StrictHostKeyChecking=no" -i ssh_key.pem docker-compose.yml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+
+      - name: SSH into VM and Deploy with Docker Compose
+        run: |
+          ssh -o "StrictHostKeyChecking=no" -i ssh_key.pem azureuser@${{ env.VM_PUBLIC_IP }} << 'EOF'
+            echo "${{ env.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ env.ACR_USERNAME }}" --password-stdin
+            cd /home/azureuser/
+            if [ $(docker ps -q | wc -l) -gt 0 ]; then
+              docker compose down
+            fi
+            docker compose up -d
+          EOF
