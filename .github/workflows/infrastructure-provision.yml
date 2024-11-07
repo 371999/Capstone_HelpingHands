@@ -92,6 +92,10 @@ jobs:
       ACR_LOGIN_SERVER: ${{ needs.provision-infrastructure.outputs.ACR_LOGIN_SERVER }}
       ACR_NAME: ${{ needs.provision-infrastructure.outputs.ACR_NAME }}
       VM_PUBLIC_IP: ${{ needs.provision-infrastructure.outputs.VM_PUBLIC_IP }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     outputs:
       IMAGE_TAG: ${{ steps.set_image_tag.outputs.IMAGE_TAG }}
@@ -111,17 +115,17 @@ jobs:
           cd backend
           sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Log in to Azure Container Registry
+        env:
+          ACR_LOGIN_SERVER: ${{ needs.provision-infrastructure.outputs.ACR_LOGIN_SERVER }}
+          ACR_NAME: ${{ needs.provision-infrastructure.outputs.ACR_NAME }}
+          VM_PUBLIC_IP: ${{ needs.provision-infrastructure.outputs.VM_PUBLIC_IP }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
-          echo ${{ secrets.AZURE_CREDENTIALS }} > azure_credentials.json
-          CLIENT_ID=$(jq -r .clientId azure_credentials.json)
-          CLIENT_SECRET=$(jq -r .clientSecret azure_credentials.json)
-          echo "$CLIENT_SECRET" | docker login $ACR_LOGIN_SERVER -u "$CLIENT_ID" --password-stdin
+          echo "${{ secrets.AZURE_CLIENT_SECRET }}" | docker login ${{ env.ACR_LOGIN_SERVER }} -u "${{ secrets.AZURE_CLIENT_ID }}" --password-stdin
 
       - name: Set Image Tag
         id: set_image_tag
