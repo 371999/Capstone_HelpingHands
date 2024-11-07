@@ -1,6 +1,6 @@
 version: '3'
  
-services:
+services: 
   backend:  
     image: shreyas3799.azurecr.io/backend:v45  # Replace with your actual backend image path
     container_name: backend
