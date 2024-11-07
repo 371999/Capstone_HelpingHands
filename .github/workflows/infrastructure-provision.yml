@@ -36,8 +36,16 @@ jobs:
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          # Capture Terraform outputs and write them to a file in the root directory
+          # Ensure a clean output by removing any existing file
+          rm -f terraform_outputs.json
           terraform -chdir=azure-terraform output -json > terraform_outputs.json
+          
+          # Validate JSON file to catch any non-JSON content
+          if ! jq empty terraform_outputs.json; then
+            echo "Error: terraform_outputs.json contains invalid JSON."
+            cat terraform_outputs.json  # Output file content for debugging
+            exit 1
+          fi
         shell: bash
 
       - name: Upload Terraform Outputs Artifact
@@ -49,19 +57,9 @@ jobs:
       - name: Extract Outputs and Set Environment Variables
         id: extract_outputs
         run: |
-          # Debugging: Print current working directory and list files
-          echo "Current directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -l
-
-          # Debugging: Print raw JSON for analysis
+          # Print JSON file to confirm content
+          echo "Contents of terraform_outputs.json:"
           cat terraform_outputs.json
-
-          # Check if file exists and is not empty
-          if [ ! -s terraform_outputs.json ]; then
-            echo "Error: terraform_outputs.json is empty or does not exist."
-            exit 1
-          fi
 
           # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
@@ -69,13 +67,13 @@ jobs:
           ACR_USERNAME=$(jq -r '.acr_username.value' terraform_outputs.json)
           ACR_PASSWORD=$(jq -r '.acr_password.value' terraform_outputs.json)
 
-          # Debug extracted values to ensure they are correctly captured
+          # Output extracted values for verification (mask sensitive info as needed)
           echo "Extracted VM_PUBLIC_IP: $VM_PUBLIC_IP"
           echo "Extracted ACR_LOGIN_SERVER: $ACR_LOGIN_SERVER"
           echo "Extracted ACR_USERNAME: $ACR_USERNAME"
           echo "Extracted ACR_PASSWORD: [REDACTED]"
 
-          # Set environment variables for later use in this workflow
+          # Set environment variables for later steps
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
           echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
@@ -135,18 +133,18 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # Debugging: List files to confirm the artifact is downloaded
+          # Confirm artifact presence
           echo "Current directory: $(pwd)"
           echo "Files in current directory:"
           ls -l
 
-          # Check if file exists and is not empty
+          # Validate and update secrets if JSON is intact
           if [ ! -s terraform_outputs.json ]; then
             echo "Error: terraform_outputs.json is empty or does not exist."
             exit 1
           fi
 
-          # Read outputs from the artifact file and update secrets
+          # Read outputs and update secrets
           jq -r 'to_entries[] | "\(.key)=\(.value.value)"' terraform_outputs.json | while IFS='=' read -r key value; do
             echo "Updating secret $key..."
             curl -X PUT -H "Authorization: token $PAT_TOKEN" \
