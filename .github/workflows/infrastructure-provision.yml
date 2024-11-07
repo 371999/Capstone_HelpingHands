@@ -49,8 +49,43 @@ jobs:
           cat terraform_outputs.json
         shell: bash
 
-      - name: Extract Outputs and Set Environment Variables
-        id: extract_outputs
+      jobs:
+  provision-infrastructure:
+    name: Provision Infrastructure with Terraform
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        run: |
+          cd azure-terraform
+          terraform init
+
+      - name: Apply Terraform Configuration
+        run: |
+          cd azure-terraform
+          terraform apply -auto-approve
+
+      - name: Capture Outputs
+        id: capture_outputs
+        run: |
+          cd azure-terraform
+          # Capture Terraform outputs as JSON and redirect error messages to /dev/null
+          terraform output -json > ../terraform_outputs.json 2>/dev/null
+        shell: bash
+
+      - name: Debug Outputs
         run: |
           # Print the first few lines of terraform_outputs.json to understand its structure
           echo "=== Printing first few lines of terraform_outputs.json ==="
@@ -62,7 +97,11 @@ jobs:
             echo "Error: terraform_outputs.json is not valid JSON."
             exit 1
           fi
+        shell: bash
 
+      - name: Extract Outputs and Set Environment Variables
+        id: extract_outputs
+        run: |
           # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
           ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
@@ -85,7 +124,6 @@ jobs:
           echo "ACR_USERNAME_BASE64=$ACR_USERNAME_BASE64" >> $GITHUB_ENV
           echo "ACR_PASSWORD_BASE64=$ACR_PASSWORD_BASE64" >> $GITHUB_ENV
         shell: bash
-
 
       - name: Update Frontend .env File
         run: |
