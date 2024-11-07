@@ -1,19 +1,41 @@
-# Define the Azure Provider
+# Step 1: Define Azure Provider
 provider "azurerm" {
   features {}
 }
 
-# Configure the Terraform backend to store state in Azure
-terraform {   
-  backend "azurerm" {  
-    resource_group_name  = "myBackendResourceGroup"  
-    storage_account_name = "shreyas3799"        
-    container_name       = "tfstate"                 
-    key                  = "dev.tfstate"             
+# Step 2: Create Resource Group and Storage Account for Backend State
+resource "azurerm_resource_group" "backend_rg" {
+  name     = "myBackendResourceGroup"
+  location = "East US"
+}
+
+resource "azurerm_storage_account" "backend_storage" {
+  name                     = "sarthak"         # Change to a globally unique name if needed
+  resource_group_name      = azurerm_resource_group.backend_rg.name
+  location                 = azurerm_resource_group.backend_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_storage_container" "tfstate" {
+  name                  = "tfstate"
+  storage_account_name  = azurerm_storage_account.backend_storage.name
+  container_access_type = "private"
+}
+
+# Step 3: Configure Terraform Backend (after running terraform apply once)
+terraform {
+  backend "azurerm" {
+    resource_group_name   = azurerm_resource_group.backend_rg.name
+    storage_account_name  = azurerm_storage_account.backend_storage.name
+    container_name        = azurerm_storage_container.tfstate.name
+    key                   = "dev.tfstate"
   }
 }
 
-# Create a Resource Group
+# Step 4: Create Other Resources (e.g., VM, Network, etc.)
+
+# Define a new resource group for other resources
 resource "azurerm_resource_group" "dev_rg" {
   name     = "myResourceGroup"
   location = "East US"
@@ -41,7 +63,6 @@ resource "azurerm_network_security_group" "dev_nsg" {
   location            = azurerm_resource_group.dev_rg.location
   resource_group_name = azurerm_resource_group.dev_rg.name
 
-  # Allow SSH
   security_rule {
     name                       = "Allow-SSH"
     priority                   = 1000
@@ -50,44 +71,6 @@ resource "azurerm_network_security_group" "dev_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  # Allow HTTP and HTTPS
-  security_rule {
-    name                       = "Allow-HTTP"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Allow-HTTPS"
-    priority                   = 1002
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "443"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  # Allow custom port (8080) if needed
-  security_rule {
-    name                       = "Allow-8080"
-    priority                   = 1003
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "8080"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -150,40 +133,14 @@ resource "azurerm_linux_virtual_machine" "dev_vm" {
   }
 }
 
-# Create an Azure Container Registry
-resource "azurerm_container_registry" "acr" {
-  name                = "myContainerRegistry123"
-  resource_group_name = azurerm_resource_group.dev_rg.name
-  location            = azurerm_resource_group.dev_rg.location
-  sku                 = "Basic"
-  admin_enabled       = true
-}
-
 # Define a variable for SSH public key
 variable "ssh_public_key" {
   description = "SSH public key for VM access"
   type        = string
 }
 
-# Output the Public IP and ACR login server details
+# Outputs
 output "vm_public_ip" {
   value       = azurerm_public_ip.dev_public_ip.ip_address
   description = "The public IP of the VM"
-}
-
-output "acr_login_server" {
-  value       = azurerm_container_registry.acr.login_server
-  description = "The login server for Azure Container Registry"
-}
-
-output "acr_username" {
-  value       = azurerm_container_registry.acr.admin_username
-  description = "The username for Azure Container Registry"
-  sensitive   = true
-}
-
-output "acr_password" {
-  value       = azurerm_container_registry.acr.admin_password
-  description = "The password for Azure Container Registry"
-  sensitive   = true
 }
