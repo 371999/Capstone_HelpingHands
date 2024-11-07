@@ -45,17 +45,29 @@ jobs:
 
       - name: Debug Outputs
         run: |
+          # Print the contents of the JSON file to see if the output looks correct
           cat terraform_outputs.json
         shell: bash
 
       - name: Extract Outputs and Set Environment Variables
         id: extract_outputs
         run: |
-          # Extract outputs from JSON file
+          # Debugging: Print raw JSON for analysis
+          cat terraform_outputs.json
+          
+          # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
           ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
+
+          # Handle sensitive outputs carefully
           ACR_USERNAME=$(jq -r '.acr_username.value' terraform_outputs.json)
           ACR_PASSWORD=$(jq -r '.acr_password.value' terraform_outputs.json)
+
+          # Debug extracted values to ensure they are correctly captured
+          echo "Extracted VM_PUBLIC_IP: $VM_PUBLIC_IP"
+          echo "Extracted ACR_LOGIN_SERVER: $ACR_LOGIN_SERVER"
+          echo "Extracted ACR_USERNAME: $ACR_USERNAME"
+          echo "Extracted ACR_PASSWORD: [REDACTED]"
 
           # Set environment variables for later use in this workflow
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
