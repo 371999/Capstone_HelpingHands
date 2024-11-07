@@ -33,8 +33,8 @@ const UserProfileSchema = new mongoose.Schema({
         province: { type: String, required: false },
         country: {type: String, required: false },
     },
-    resetPasswordToken: String,
-    resetPasswordExpire: Date
+    //resetPasswordToken: String,
+    //resetPasswordExpire: Date
 });
 
 module.exports = mongoose.model('Profile', UserProfileSchema);
