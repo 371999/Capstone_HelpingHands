@@ -1,11 +1,5 @@
 name: Terraform Destroy Infrastructure
 
-on:
-  push:
-    branches:
-      - shreyas
-    paths:
-
 jobs:
   destroy-infrastructure:
     name: Destroy Infrastructure with Terraform
