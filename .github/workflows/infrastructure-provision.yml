@@ -22,8 +22,16 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v2
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+      - name: Install Terraform
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common curl
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt-get update && sudo apt-get install -y terraform
+
+      - name: Terraform Version
+        run: terraform version
 
       - name: Terraform Init
         run: |
@@ -40,11 +48,11 @@ jobs:
         run: |
           cd azure-terraform
 
-          # Capture outputs directly from terraform output command, removing unwanted lines using grep
-          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip 2>/dev/null | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server 2>/dev/null | awk '{print $1}')
-          ACR_USERNAME=$(terraform output -raw acr_username 2>/dev/null | awk '{print $1}')
-          ACR_PASSWORD=$(terraform output -raw acr_password 2>/dev/null | awk '{print $1}')
+          # Capture outputs directly from terraform output command
+          VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)
+          ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
+          ACR_USERNAME=$(terraform output -raw acr_username)
+          ACR_PASSWORD=$(terraform output -raw acr_password)
 
           # Debug the extracted values to make sure they're correct
           echo "Extracted VM_PUBLIC_IP: $VM_PUBLIC_IP"
@@ -61,7 +69,6 @@ jobs:
 
       - name: Update Frontend .env File
         run: |
-          # Update the .env file in the frontend folder with the captured VM_PUBLIC_IP
           cd frontend
           sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
           sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
@@ -69,7 +76,6 @@ jobs:
 
       - name: Update Backend .env File
         run: |
-          # Update the .env file in the backend folder with the captured VM_PUBLIC_IP
           cd backend
           sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
         shell: bash
