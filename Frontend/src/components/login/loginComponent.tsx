@@ -110,7 +110,7 @@ export default function LoginComponennt() {
     }
 
     if (!emailRegex.test(email)) {
-      setRegistrationFormValidation('Email Address format is invalid. Try Again!');
+      setRegistrationFormValidation('ohh sorry1Email Address format you have added is invalid. Try Again!');
       return;
     }
 
