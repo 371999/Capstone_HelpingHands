@@ -1,3 +1,9 @@
+# Define the Resource Group
+resource "azurerm_resource_group" "dev_rg" {
+  name     = "myResourceGroup"  # Replace with your desired resource group name
+  location = "East US"          # Replace with your desired location
+}
+
 # Network Security Group with All Security Rules
 resource "azurerm_network_security_group" "dev_nsg" {
   name                = "dev-nsg"
@@ -200,4 +206,5 @@ output "vm_public_ip" {
   value       = azurerm_public_ip.dev_public_ip.ip_address
   description = "The public IP of the VM"
 }
+
 
