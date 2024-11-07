@@ -1,3 +1,7 @@
+# Provider Configuration for Azure
+provider "azurerm" {
+  features {}
+}
 terraform {
   backend "azurerm" {
     resource_group_name   = "myBackendResourceGroup"   # Hardcoded name of the resource group
