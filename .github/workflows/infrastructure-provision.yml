@@ -95,10 +95,6 @@ jobs:
           if [ -d "backend" ]; then
             cd backend
             sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
-            # Add ACR details if necessary to backend .env
-            sed -i "s|ACR_LOGIN_SERVER=.*|ACR_LOGIN_SERVER=${{ env.ACR_LOGIN_SERVER }}|g" .env
-            sed -i "s|ACR_USERNAME=.*|ACR_USERNAME=${{ env.ACR_USERNAME }}|g" .env
-            sed -i "s|ACR_PASSWORD=.*|ACR_PASSWORD=${{ env.ACR_PASSWORD }}|g" .env
           else
             echo "Directory 'backend' not found. Skipping update."
           fi
