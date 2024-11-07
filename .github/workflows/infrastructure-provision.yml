@@ -77,16 +77,6 @@ jobs:
           sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
         shell: bash
 
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add frontend/.env backend/.env
-          git commit -m "Update .env files with VM public IP"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   update-secrets:
     name: Update GitHub Secrets with Terraform Outputs
     runs-on: ubuntu-latest
