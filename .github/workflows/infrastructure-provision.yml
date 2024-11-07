@@ -27,39 +27,48 @@ jobs:
 
       - name: Terraform Init
         run: |
-          cd azure-terraform
-          terraform init
+          terraform -chdir=azure-terraform init
 
       - name: Apply Terraform Configuration
         run: |
-          cd azure-terraform
-          terraform apply -auto-approve
+          terraform -chdir=azure-terraform apply -auto-approve
 
       - name: Capture Outputs
         id: capture_outputs
         run: |
-          cd azure-terraform
-          # Capture Terraform outputs and write them to a file
-          terraform output -json > ../terraform_outputs.json
+          # Capture Terraform outputs and write them to a file in the root directory
+          terraform -chdir=azure-terraform output -json > terraform_outputs.json
         shell: bash
 
-      - name: Debug Outputs
-        run: |
-          # Print the contents of the JSON file to see if the output looks correct
-          cat terraform_outputs.json
-        shell: bash
+      - name: Upload Terraform Outputs Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-outputs
+          path: terraform_outputs.json
 
       - name: Extract Outputs and Set Environment Variables
         id: extract_outputs
         run: |
+          # Debugging: Print current working directory and list files
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -l
+
+          # Ensure 'cat' is not aliased or overridden
+          unalias cat 2>/dev/null || true
+
           # Debugging: Print raw JSON for analysis
           cat terraform_outputs.json
-          
+
+          # Check if file exists and is not empty
+          if [ ! -s terraform_outputs.json ]; then
+            echo "Error: terraform_outputs.json is empty or does not exist."
+            exit 1
+          fi
+
           # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
           ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
-
-          # Handle sensitive outputs carefully
           ACR_USERNAME=$(jq -r '.acr_username.value' terraform_outputs.json)
           ACR_PASSWORD=$(jq -r '.acr_password.value' terraform_outputs.json)
 
@@ -129,6 +138,17 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
+          # Debugging: List files to confirm the artifact is downloaded
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -l
+
+          # Check if file exists and is not empty
+          if [ ! -s terraform_outputs.json ]; then
+            echo "Error: terraform_outputs.json is empty or does not exist."
+            exit 1
+          fi
+
           # Read outputs from the artifact file and update secrets
           jq -r 'to_entries[] | "\(.key)=\(.value.value)"' terraform_outputs.json | while IFS='=' read -r key value; do
             echo "Updating secret $key..."
