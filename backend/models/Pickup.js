@@ -5,7 +5,7 @@ const pickupSchema = new mongoose.Schema({
   status: { type: String, default: 'pending' },  // pending, completed
   type: { type: String, required: true },        // delivery or pickup
   scheduleDate: { type: Date, required: true },
-  trackingId: { type: String, required: false },  // For third-party delivery tracking
+ // trackingId: { type: String, required: false },  // For third-party delivery tracking
   completed: { type: Boolean, default: false },   // Status of the pickup
 });
 
