@@ -1,10 +1,11 @@
 name: Configure VM and build,tag,push and deploy with Docker Compose
 
 on:
-  workflow_run:
-    workflows: ["Terraform Provisioning"]  # Name of the first pipeline workflow
-    types:
-      - completed 
+  push:
+    branches:
+      - shreyas
+    paths:
+      - "docker-compose.yml"
 
 jobs:
   configure-vm:
