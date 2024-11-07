@@ -30,17 +30,10 @@ jobs:
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
           sudo apt-get update && sudo apt-get install -y terraform
 
-      - name: Terraform Version
-        run: terraform version
-
-      - name: Terraform Init
+      - name: Terraform Init and Apply
         run: |
           cd azure-terraform
           terraform init
-
-      - name: Apply Terraform Configuration
-        run: |
-          cd azure-terraform
           terraform apply -auto-approve
 
       - name: Capture Outputs and Set Environment Variables
@@ -60,11 +53,15 @@ jobs:
           echo "Extracted ACR_USERNAME: $ACR_USERNAME"
           echo "Extracted ACR_PASSWORD: [REDACTED]"
 
+          # Base64 encode sensitive values
+          ACR_USERNAME_ENCODED=$(echo -n "$ACR_USERNAME" | base64)
+          ACR_PASSWORD_ENCODED=$(echo -n "$ACR_PASSWORD" | base64)
+
           # Set environment variables for later use in this workflow
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
-          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
-          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
+          echo "ACR_USERNAME=$ACR_USERNAME_ENCODED" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$ACR_PASSWORD_ENCODED" >> $GITHUB_ENV
         shell: bash
 
       - name: Update Frontend .env File
