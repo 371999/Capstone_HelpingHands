@@ -38,17 +38,30 @@ jobs:
       - name: Capture Outputs
         id: capture_outputs
         run: |
+          cd azure-terraform
+          # Check if the state file has been saved properly
+          terraform state list || exit 1
           # Capture Terraform outputs and write them to a file
-          echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)" > terraform_outputs.txt
-          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> terraform_outputs.txt
-          echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> terraform_outputs.txt
-          echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> terraform_outputs.txt
+          echo "VM_PUBLIC_IP=$(terraform output -raw vm_public_ip)" > ../terraform_outputs.txt
+          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> ../terraform_outputs.txt
+          echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> ../terraform_outputs.txt
+          echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> ../terraform_outputs.txt
 
       - name: Upload Outputs as Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: terraform-outputs
           path: terraform_outputs.txt
+
+  update-env-files:
+    name: Update .env Files with Terraform Outputs
+    runs-on: ubuntu-latest
+    needs: provision-infrastructure
+    steps:
+      - name: Download Outputs Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-outputs
 
       - name: Extract VM Public IP from Artifact
         id: extract_ip
