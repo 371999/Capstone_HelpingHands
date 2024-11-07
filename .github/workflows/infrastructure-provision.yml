@@ -53,10 +53,10 @@ jobs:
           ACR_USERNAME=$(terraform output -raw acr_username)
           ACR_PASSWORD=$(terraform output -raw acr_password)
 
-          echo "::set-output name=VM_PUBLIC_IP::$VM_PUBLIC_IP"
-          echo "::set-output name=ACR_LOGIN_SERVER::$ACR_LOGIN_SERVER"
-          echo "::set-output name=ACR_USERNAME::$ACR_USERNAME"
-          echo "::set-output name=ACR_PASSWORD::$ACR_PASSWORD"
+          echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_OUTPUT
+          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_OUTPUT
 
   configure-vm:
     name: Configure VM with Ansible
@@ -126,7 +126,7 @@ jobs:
         id: set_image_tag
         run: |
           IMAGE_TAG="v${{ github.run_number }}"
-          echo "::set-output name=IMAGE_TAG::${IMAGE_TAG}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Build and Push Frontend Image
         run: |
