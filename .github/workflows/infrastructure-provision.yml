@@ -35,23 +35,14 @@ jobs:
           cd azure-terraform
           terraform apply -auto-approve
 
-      - name: Capture Outputs
+      - name: Capture Outputs and Set Environment Variables
         id: capture_outputs
         run: |
           cd azure-terraform
-          # Capture Terraform outputs and write them to a file
-          terraform output -json > ../terraform_outputs.json
-        shell: bash
 
-      - name: Debug Outputs
-        run: |
-          # Print the contents of the JSON file to see if the output looks correct
-          cat terraform_outputs.json
-        shell: bash
+          # Capture Terraform outputs as JSON
+          terraform output -json > terraform_outputs.json
 
-      - name: Extract Outputs and Set Environment Variables
-        id: extract_outputs
-        run: |
           # Extract outputs from JSON file using jq
           VM_PUBLIC_IP=$(jq -r '.vm_public_ip.value' terraform_outputs.json)
           ACR_LOGIN_SERVER=$(jq -r '.acr_login_server.value' terraform_outputs.json)
@@ -64,36 +55,26 @@ jobs:
           echo "Extracted ACR_USERNAME: $ACR_USERNAME"
           echo "Extracted ACR_PASSWORD: [REDACTED]"
 
-          # Base64 encode sensitive values before storing them
-          ACR_USERNAME_BASE64=$(echo -n "$ACR_USERNAME" | base64)
-          ACR_PASSWORD_BASE64=$(echo -n "$ACR_PASSWORD" | base64)
-
           # Set environment variables for later use in this workflow
           echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> $GITHUB_ENV
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
-          echo "ACR_USERNAME_BASE64=$ACR_USERNAME_BASE64" >> $GITHUB_ENV
-          echo "ACR_PASSWORD_BASE64=$ACR_PASSWORD_BASE64" >> $GITHUB_ENV
+          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
         shell: bash
 
       - name: Update Frontend .env File
         run: |
-          if [ -d "frontend" ]; then
-            cd frontend
-            sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-            sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
-          else
-            echo "Directory 'frontend' not found. Skipping update."
-          fi
+          # Update the .env file in the frontend folder with the captured VM_PUBLIC_IP
+          cd frontend
+          sed -i "s|NEXT_PUBLIC_API_URL=http://localhost:8080|NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
+          sed -i "s|NEXT_PUBLIC_AUTH_URL=http://localhost:8080|NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080|g" .env
         shell: bash
 
       - name: Update Backend .env File
         run: |
-          if [ -d "backend" ]; then
-            cd backend
-            sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
-          else
-            echo "Directory 'backend' not found. Skipping update."
-          fi
+          # Update the .env file in the backend folder with the captured VM_PUBLIC_IP
+          cd backend
+          sed -i "s|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000|g" .env
         shell: bash
 
       - name: Commit and Push Changes
@@ -101,7 +82,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add frontend/.env backend/.env
-          git commit -m "Update .env files with VM public IP and ACR details" || echo "No changes to commit"
+          git commit -m "Update .env files with VM public IP"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,24 +92,29 @@ jobs:
     runs-on: ubuntu-latest
     needs: provision-infrastructure
     steps:
-      - name: Download Outputs Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: terraform-outputs
-
       - name: Update GitHub Secrets
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          VM_PUBLIC_IP: ${{ env.VM_PUBLIC_IP }}
+          ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}
+          ACR_USERNAME: ${{ env.ACR_USERNAME }}
+          ACR_PASSWORD: ${{ env.ACR_PASSWORD }}
         run: |
-          # Update GitHub secrets using the extracted values from the artifact
-          jq -r 'to_entries[] | "\(.key)=\(.value.value)"' terraform_outputs.json | while IFS='=' read -r key value; do
+          # Update the GitHub repository secrets
+          declare -A secrets=(
+            ["VM_PUBLIC_IP"]="$VM_PUBLIC_IP"
+            ["ACR_LOGIN_SERVER"]="$ACR_LOGIN_SERVER"
+            ["ACR_USERNAME"]="$ACR_USERNAME"
+            ["ACR_PASSWORD"]="$ACR_PASSWORD"
+          )
+
+          for key in "${!secrets[@]}"; do
+            value="${secrets[$key]}"
             echo "Updating secret $key..."
-            if [[ "$key" == "acr_password" || "$key" == "acr_username" ]]; then
-              value=$(echo -n "$value" | base64)
-            fi
             curl -X PUT -H "Authorization: Bearer $PAT_TOKEN" \
                  -H "Accept: application/vnd.github.v3+json" \
                  -H "Content-Type: application/json" \
                  https://api.github.com/repos/${{ github.repository }}/actions/secrets/$key \
                  -d "{\"encrypted_value\":\"$value\"}"
           done
+        shell: bash
