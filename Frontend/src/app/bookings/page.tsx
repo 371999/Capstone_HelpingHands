@@ -1,7 +1,6 @@
 /*
  * File: bookings/page.tsx
- * Author: Jeet Jani <jeetjani@dal.ca>
- * Date: 2024-07-30
+ * Author: Darshan Modi
  * Description: Frontend logic for booking list.
  */
 
