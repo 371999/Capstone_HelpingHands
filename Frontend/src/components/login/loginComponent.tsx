@@ -71,11 +71,12 @@ export default function LoginComponennt() {
         });
         authenticate(response.data.token);
         const user = getProfileData();
+        console.log("user", user);
         if (user?.type == 'user') {
           router.push(`/item_search`);
         }
         if (user?.type == 'admin') {
-          router.push(`/gymOwnerDashboard`);
+          router.push(`/itemDashboard`);
         }
         setLoginFormValidation('');
       } else {
@@ -110,7 +111,7 @@ export default function LoginComponennt() {
     }
 
     if (!emailRegex.test(email)) {
-      setRegistrationFormValidation('ohh sorry1Email Address format you have added is invalid. Try Again!');
+      setRegistrationFormValidation('Email Address format is invalid. Try Again!');
       return;
     }
 
