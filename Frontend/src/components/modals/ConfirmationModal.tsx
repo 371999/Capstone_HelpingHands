@@ -1,10 +1,3 @@
-/*
- * File: ConfirmationModal.tsx
- * Author: Jeet Jani <jeetjani@dal.ca>
- * Date: 2024-08-10
- * Description: Confirmation modal for re-use.
- */
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
