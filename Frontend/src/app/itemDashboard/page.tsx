@@ -1,9 +1,3 @@
-/*
- * File: /gymOwnerDashboard/page.tsx
- * Author: Raj Chauhan <rj513623@dal.ca>
- * Date: 2024-07-30
- * Description: Use for Gyms Owners to see their gym.
- */
 
 "use client";
 import React, { useEffect, useState } from "react";
@@ -69,6 +63,7 @@ const Dashboard = () => {
   const [users, setUsers] = useState<User[] | null>([]);
 
   const user = getProfileData() as User | undefined;
+  console.log("user", user);
   const id = user?.id;
 
   useEffect(() => {
@@ -77,7 +72,7 @@ const Dashboard = () => {
         const [
           getGym,
         ] = await Promise.all([
-          fetch(process.env.NEXT_PUBLIC_API_URL + "/item/?userId=" + id),
+          fetch(process.env.NEXT_PUBLIC_API_URL + "/item/owner/" + id),
         ]);
         const FetchGyms = await getGym.json();
         setGyms(FetchGyms.items);
@@ -88,7 +83,7 @@ const Dashboard = () => {
 
     fetchData();
   }, []);
-
+ 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-primary-foreground p-6">
@@ -136,13 +131,13 @@ const Dashboard = () => {
                     {/* <p className="text-lg font-semibold">${gym.price}/day</p> */}
                     <div className="flex space-x-2">
                       <Button variant="outline" asChild>
-                        <Link href={`/gyms/${gym._id}`}>Edit</Link>
+                        <Link href={`/items/${gym._id}`}>Edit</Link>
                       </Button>
-                      <Button variant="outline" asChild>
+                      {/* <Button variant="outline" asChild>
                         <Link href={`/analytics/${gym._id}`} prefetch={false}>
-                          View
+                          Delete
                         </Link>
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>
@@ -151,10 +146,10 @@ const Dashboard = () => {
           ) : (
               <div className="justify-center align-center flex-wrap font-extrabold text-3xl ">
                 <p className=" font-extrabold text-3xl ">
-                  No gyms found
+                  No Item found
                 </p>
                 <p className=" font-semibold text-sm ">
-                  Add a Gym from Navbar First
+                  Add a Item from Navbar First
                 </p>
               </div>
           )}
