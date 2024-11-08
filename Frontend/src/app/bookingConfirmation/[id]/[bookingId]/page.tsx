@@ -1,9 +1,3 @@
-/*
- * File: page.tsx
- * Author: Darshan Modi
- * Description: Use for creating new booking or edit existing booking.
- */
-
 "use client"
 
 import { Button } from "@/components/ui/button"
