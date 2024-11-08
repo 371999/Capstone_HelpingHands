@@ -3,7 +3,7 @@ name: CI/CD for Application Deployment
 on:
   push:
     branches:
-      - main
+      - shreyas
     paths:
       - 'frontend/**'
       - 'backend/**'
