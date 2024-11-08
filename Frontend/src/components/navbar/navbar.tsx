@@ -49,7 +49,7 @@ export default function NavBar() {
     if (loggedInUser?.type === 'user') {
       router.push('/item_search');
     } else {
-      router.push('/gymOwnerDashboard'); // Change this to the desired route for non-"user" users
+      router.push('/itemDashboard'); // Change this to the desired route for non-"user" users
     }
   };
 
