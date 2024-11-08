@@ -75,6 +75,11 @@ export default function MobileNav() {
               Add Item
             </Button>
           </Link>
+          <Link href={"/itemDashboard"} prefetch={false}>
+            <Button variant="ghost" className="w-full">
+              Your Items
+            </Button>
+          </Link>
           <Button onClick={handleLogout} variant="ghost" className="w-full">
             Logout
           </Button>
