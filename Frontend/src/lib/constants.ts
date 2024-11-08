@@ -12,12 +12,20 @@ export const INITIAL_LINKS: Array<LinkType> = [
     name: "Add Item",
     ref: "/item",
   },
+  {
+    name: "Your Items",
+    ref: "/itemDashboard",
+  },
 ];
 
 export const GYMOWNER_LINKS: Array<LinkType> = [
   {
-    name: "Add Gym",
+    name: "Add Item",
     ref: "/item",
+  },
+  {
+    name: "Your Items",
+    ref: "/itemDashboard",
   },
 ];
 
