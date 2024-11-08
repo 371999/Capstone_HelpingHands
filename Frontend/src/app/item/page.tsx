@@ -154,7 +154,7 @@ export default function GymPage() {
 
         setTimeout(() => {
           // @ts-ignore
-          router.push("/gymOwnerDashboard");
+          router.push("/itemDashboard");
         }, 2000);
       } else {
         toast.error("Error saving gym details.");
@@ -245,10 +245,10 @@ export default function GymPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() =>
-                          handleSelect("clothing")
+                          handleSelect("Clothes")
                         }
                       >
-                        Cloths
+                        Clothes
                       </DropdownMenuItem>
                       {/* <DropdownMenuItem
                         onSelect={() =>
