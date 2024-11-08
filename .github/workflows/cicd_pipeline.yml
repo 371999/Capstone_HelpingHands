@@ -1,0 +1,114 @@
+name: CI/CD for Application Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '**/cicd_pipeline.yml'
+  workflow_dispatch:
+    description: "Trigger workflow for manual CI/CD push"
+
+# Special permissions required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+
+# These environment variables are used by the terraform azure provider to setup OIDD authenticate. 
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+
+jobs:
+  cicd:
+    name: CI/CD for Application
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Login to azure cli
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'        
+
+    # Install the latest version of the Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    # Will fail the build if not
+    - name: Terraform Format
+      run: terraform fmt -check
+      working-directory: terraform
+
+    # setup ssh keys for authentication with vm
+    - name: Set Up SSH Keys
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
+
+    - name: Get ACR Credentials and VM public IP
+      id: get-acr
+      run: |
+        echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+        echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
+        echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
+        echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
+      working-directory: terraform
+
+    - name: Login to ACR
+      uses: azure/docker-login@v2
+      with:
+        login-server: ${{ env.ACR_LOGIN_SERVER }}
+        username: ${{ env.ACR_USERNAME }}
+        password: ${{ env.ACR_PASSWORD }}
+
+    - name: Build Docker Images - Frontend and Backend
+      run: |
+        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend
+        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend
+
+    - name: Push Docker Images to ACR
+      run: |
+        docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+        docker push ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+
+    - name: SSH into Azure VM and Deploy Docker Containers
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+
+          echo ${{ env.ACR_PASSWORD }} | docker login ${{ env.ACR_LOGIN_SERVER }} -u ${{ env.ACR_USERNAME }} --password-stdin
+          
+          docker image prune -af
+
+          docker pull ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+          docker pull ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+
+          # Stop and remove any existing containers
+          docker stop frontend || true && docker rm frontend || true
+          docker stop backend || true && docker rm backend || true
+
+          # Run the updated Docker containers
+          docker run -d --name frontend -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080 -e NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080 ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+          docker run -d --name backend -p 8080:8080 -e PORT=8080 -e MONGODB_URI=${{ secrets.MONGODB_URI }} -e FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000 -e JWT_SECRET=${{ secrets.JWT_SECRET }} ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+        EOF
+
