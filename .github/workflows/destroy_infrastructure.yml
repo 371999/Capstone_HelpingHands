@@ -1,6 +1,8 @@
 name: Terraform Destroy for Azure
 
 on:
+  branches:
+      - shreyas
   workflow_dispatch:
     description: "Trigger workflow to destroy Azure environment with Terraform"
 
