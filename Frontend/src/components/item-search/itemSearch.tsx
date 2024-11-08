@@ -6,6 +6,7 @@ import axios from 'axios';
 import { StarIcon } from 'lucide-react';
 import Link from "next/link";
 import { useEffect, useState } from 'react';
+import { getProfileData } from "../../../Auth/AuthService";
 
 type sortOptionType = "Our top picks" | "Price (lowest first)" | "Best reviewed" | "Property rating (high to low)"
 
@@ -14,17 +15,36 @@ const SearchItems = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sortOption, setSortOption] = useState('Our top picks');
+  const [sortOption, setSortOption] = useState('All');
+  const [response, setResponse] = useState('');
+  const [showMyRequests, setShowMyRequests] = useState(false);
+
+  const user = getProfileData();
 
   const fetchGyms = async () => {
+    console.log("fetch gyms");
+
     setLoading(true);
-    const payload = {
-      title: searchTerm,
-    };
+    // const payload = {
+    //   type: searchTerm === 'All' ? null : searchTerm,
+    // };
+    const type = sortOption === 'All' ? '' : `&type=${sortOption}`;
+    const userQuery = showMyRequests && user ? `?userId=${user.id}` : '?status=1';
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/item?status=1`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/item${userQuery}${type}`);
       console.log("response", response);
       setItems(response.data.items);
+    } catch (error) {
+      console.error('Error fetching gyms:', error);
+    } finally {
+      setLoading(false);
+    }
+
+    try {
+      const newResponse = await axios.get("https://csci-5709-tutorials-btrp.onrender.com/test");
+      if(newResponse) {
+        setResponse(newResponse.data?.message);
+      }
     } catch (error) {
       console.error('Error fetching gyms:', error);
     } finally {
@@ -34,17 +54,23 @@ const SearchItems = () => {
 
 
   const handleSelect = (eventKey) => {
+    console.log("handle select", eventKey);
     setSortOption(eventKey);
-    fetchGyms(); // Fetch gyms immediately when sort option changes
+    // fetchGyms(); // Fetch gyms immediately when sort option changes
+  };
+
+  const handleToggle = () => {
+    setShowMyRequests(prev => !prev);  // Toggle showMyRequests
   };
 
   useEffect(() => {
     fetchGyms();
-  }, [sortOption, searchTerm, city]); // Fetch gyms when these dependencies change
+  }, [sortOption, showMyRequests]); // Fetch gyms when these dependencies change
 
   return (
 
     <div style={{ marginTop: '30px' }}>
+      <h1>{response}</h1>
 
       <div className="flex flex-col gap-4 p-4 mx-4">
         <div className="flex flex-row gap-4 items-center">
@@ -59,23 +85,32 @@ const SearchItems = () => {
             placeholder="Enter city..."
             value={city}
             onChange={e => setCity(e.target.value)}
-          />
+          /> */}
           <div className="flex items-center gap-2">
-            <span>Sort by:</span>
+            <span>Filter by:</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default">{sortOption}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuLabel>Sorting Options</DropdownMenuLabel>
+                <DropdownMenuLabel>Item Type</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => handleSelect("Our top picks")}>Our top picks</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleSelect("Price (lowest first)")}>Price (lowest first)</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleSelect("Best reviewed and lowest price")}>Best reviewed and lowest price</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleSelect("Property rating (high to low)")}>Property rating (high to low)</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleSelect("All")}>All</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleSelect("Food")}>Food</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleSelect("Clothes")}>Clothes</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div> */}
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="toggle">My Requests Only</label>
+            <input
+              id="toggle"
+              type="checkbox"
+              checked={showMyRequests}
+              onChange={handleToggle}
+              className="toggle-checkbox"
+            />
+          </div>
         </div>
       </div>
 
@@ -99,15 +134,14 @@ const SearchItems = () => {
                 </div> */}
               </div>
               <p className="text-sm text-muted-foreground">{item.address.street}, {item.address.city}</p>
-              <div className="flex items-center justify-between mt-2">
-                {/* <p className="text-lg font-semibold">${item.price}/day</p> */}
+              {/* <div className="flex items-center justify-between mt-2">
                 <Button variant="outline" size="sm">
-                  Join Now
+                  Check Now
                 </Button>
-              </div>
+              </div> */}
             </div>
           </div>
-        )) : <p>No gyms found</p>}
+        )) : <p>No items found</p>}
       </div>
     </div>
 
