@@ -74,6 +74,14 @@ export function ProfileDropdown(props) {
             Profile
           </DropdownMenuItem>
         </Link>
+        <>
+        <Link href="/requests" prefetch={false}>
+              <DropdownMenuItem className="gap-2 hover:cursor-pointer">
+                <CalendarIcon className="w-4 h-4" />
+                Received Requests
+              </DropdownMenuItem>
+            </Link>
+        </>
         {/* {props.user == "user" ? (
           <>
             {" "}
