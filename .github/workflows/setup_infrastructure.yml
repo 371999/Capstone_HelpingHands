@@ -2,7 +2,7 @@ name: Terraform Setup for Azure
 
 on:
   push:
-    branches:
+    branches: 
       - shreyas
     path:
       - '**/setup_infrastructure.yml'
