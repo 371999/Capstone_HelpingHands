@@ -11,12 +11,10 @@ on:
   workflow_dispatch:
     description: "Trigger workflow for manual CI/CD push"
 
-# Special permissions required for OIDC authentication
 permissions:
   id-token: write
   contents: read
 
-# These environment variables are used by the terraform azure provider to setup OIDD authenticate. 
 env:
   ARM_USE_OIDC: "true"
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
@@ -25,46 +23,113 @@ env:
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
 
 jobs:
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Run backend unit tests
+        run: npm test
+        working-directory: ./backend
+
+      - name: Run backend integration tests
+        run: npm run test:integration
+        working-directory: ./backend
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run frontend unit tests
+        run: npm test
+        working-directory: ./frontend
+
+      - name: Run frontend integration tests
+        run: npm run test:integration
+        working-directory: ./frontend
+
+  test-docker:
+    name: Docker Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Test Backend Docker Image
+        run: |
+          docker build -t backend-test ./backend
+          docker run --rm backend-test npm run test:docker
+        working-directory: ./backend
+
+      - name: Build and Test Frontend Docker Image
+        run: |
+          docker build -t frontend-test ./frontend
+          docker run --rm frontend-test npm run test:docker
+        working-directory: ./frontend
+
   cicd:
     name: CI/CD for Application
     runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, test-docker]
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Login to azure cli
     - name: Azure Login
       uses: azure/login@v2
       with:
-        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'        
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
 
-    # Install the latest version of the Terraform CLI
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_wrapper: false
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
       working-directory: terraform
 
-    # Checks that all Terraform configuration files adhere to a canonical format
-    # Will fail the build if not
     - name: Terraform Format
       run: terraform fmt -check
       working-directory: terraform
 
-    # setup ssh keys for authentication with vm
     - name: Set Up SSH Keys
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
         chmod 600 ~/.ssh/id_rsa
-        chmod 644 ~/.ssh/id_rsa.pub
 
     - name: Get ACR Credentials and VM public IP
       id: get-acr
@@ -84,8 +149,8 @@ jobs:
 
     - name: Build Docker Images - Frontend and Backend
       run: |
-        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend
-        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend
+        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend || exit 1
+        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend || exit 1
 
     - name: Push Docker Images to ACR
       run: |
@@ -95,20 +160,28 @@ jobs:
     - name: SSH into Azure VM and Deploy Docker Containers
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
-
           echo ${{ env.ACR_PASSWORD }} | docker login ${{ env.ACR_LOGIN_SERVER }} -u ${{ env.ACR_USERNAME }} --password-stdin
           
-          docker image prune -af
+          docker image prune -af || true
 
-          docker pull ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
-          docker pull ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+          docker pull ${{ env.ACR_LOGIN_SERVER }}/frontend:latest || exit 1
+          docker pull ${{ env.ACR_LOGIN_SERVER }}/backend:latest || exit 1
 
-          # Stop and remove any existing containers
           docker stop frontend || true && docker rm frontend || true
           docker stop backend || true && docker rm backend || true
 
-          # Run the updated Docker containers
           docker run -d --name frontend -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080 -e NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080 ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
           docker run -d --name backend -p 8080:8080 -e PORT=8080 -e MONGODB_URI=${{ secrets.MONGODB_URI }} -e FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000 -e JWT_SECRET=${{ secrets.JWT_SECRET }} ${{ env.ACR_LOGIN_SERVER }}/backend:latest
         EOF
 
+  e2e-test:
+    name: E2E Testing
+    runs-on: ubuntu-latest
+    needs: cicd
+
+    steps:
+      - name: Install Cypress
+        run: npm install -g cypress
+
+      - name: Run E2E Tests
+        run: cypress run --config baseUrl=http://${{ env.VM_PUBLIC_IP }}:3000
