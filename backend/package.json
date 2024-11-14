@@ -41,3 +41,15 @@
   },
   "license": "MIT"
 }
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest --config jest.config.js",                       // Unit tests
+    "test:integration": "jest --config integration.jest.config.js", // Integration tests
+    "test:docker": "jest --config docker.jest.config.js"            // Docker-specific tests
+  },
+  "devDependencies": {
+    "jest": "^27.0.0"                      // Adjust version as needed
+  }
+}
