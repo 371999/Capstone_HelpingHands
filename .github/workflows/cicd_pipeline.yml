@@ -57,17 +57,20 @@ jobs:
         with:
           node-version: '16'
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm install
+          pnpm install
 
       - name: Run frontend unit tests
-        run: npm test
+        run: pnpm test
         working-directory: ./frontend
 
       - name: Run frontend integration tests
-        run: npm run test:integration
+        run: pnpm run test:integration
         working-directory: ./frontend
 
   test-docker:
@@ -93,7 +96,7 @@ jobs:
       - name: Build and Test Frontend Docker Image
         run: |
           docker buildx build --platform linux/amd64 -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest ./frontend
-          docker run --rm ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest npm run test:docker
+          docker run --rm ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest pnpm run test:docker
         working-directory: ./frontend
 
   cicd:
@@ -180,6 +183,14 @@ jobs:
     needs: cicd
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Node.js for Cypress
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
       - name: Install Cypress
         run: npm install -g cypress
 
