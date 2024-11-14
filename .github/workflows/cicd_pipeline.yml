@@ -88,13 +88,13 @@ jobs:
 
       - name: Build and Test Backend Docker Image
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/backend-test:latest ./backend
+          docker buildx build --platform linux/amd64 -t ${{ secrets.ACR_LOGIN_SERVER }}/backend-test:latest ./backend
           docker run --rm ${{ secrets.ACR_LOGIN_SERVER }}/backend-test:latest npm run test:docker
         working-directory: ./backend
 
       - name: Build and Test Frontend Docker Image
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest ./frontend
+          docker buildx build --platform linux/amd64 -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest ./frontend
           docker run --rm ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest npm run test:docker
         working-directory: ./frontend
 
