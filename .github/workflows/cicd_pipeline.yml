@@ -35,17 +35,16 @@ jobs:
           node-version: '20'
 
       - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
+        working-directory: ./backend
+        run: npm install
 
       - name: Run backend unit tests
-        run: npm test
         working-directory: ./backend
+        run: npm test
 
       - name: Run backend integration tests
-        run: npm run test:integration
         working-directory: ./backend
+        run: npm run test:integration
 
   test-frontend:
     name: Frontend Tests
@@ -63,53 +62,68 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install frontend dependencies
-        run: |
-          cd frontend
-          pnpm install
+        working-directory: ./frontend
+        run: pnpm install
 
       - name: Run frontend unit tests
-        run: pnpm test
         working-directory: ./frontend
+        run: pnpm test
 
       - name: Run frontend integration tests
-        run: pnpm run test:integration
         working-directory: ./frontend
-  
+        run: pnpm run test:integration
+
   test-docker:
     name: Docker Testing
     runs-on: ubuntu-latest
     steps:
-    
-      - name: Get ACR Credentials and VM public IP
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'        
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform Format
+        run: terraform fmt -check
+        working-directory: terraform
+
+      - name: Get ACR Credentials
         id: get-acr
         run: |
           echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
           echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
           echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
-          echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
         working-directory: terraform
-      
-      - name: Checkout code
-        uses: actions/checkout@v2
 
       - name: Login to ACR
         uses: azure/docker-login@v2
         with:
-          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ env.ACR_USERNAME }}
+          password: ${{ env.ACR_PASSWORD }}
 
       - name: Build and Test Backend Docker Image
-        run: |
-          docker buildx build --platform linux/amd64 -t ${{ secrets.ACR_LOGIN_SERVER }}/backend-test:latest ./backend
-          docker run --rm ${{ secrets.ACR_LOGIN_SERVER }}/backend-test:latest npm run test:docker
         working-directory: ./backend
+        run: |
+          docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend-test:latest .
+          docker run --rm ${{ env.ACR_LOGIN_SERVER }}/backend-test:latest npm run test:docker
 
       - name: Build and Test Frontend Docker Image
-        run: |
-          docker buildx build --platform linux/amd64 -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest ./frontend
-          docker run --rm ${{ secrets.ACR_LOGIN_SERVER }}/frontend-test:latest pnpm run test:docker
         working-directory: ./frontend
+        run: |
+          docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend-test:latest .
+          docker run --rm ${{ env.ACR_LOGIN_SERVER }}/frontend-test:latest pnpm run test:docker
 
   cicd:
     name: CI/CD for Application
@@ -117,7 +131,7 @@ jobs:
     needs: [test-backend, test-frontend, test-docker]
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Azure Login
@@ -145,7 +159,7 @@ jobs:
           echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
           chmod 600 ~/.ssh/id_rsa
           chmod 644 ~/.ssh/id_rsa.pub
-          
+
       - name: Get ACR Credentials and VM public IP
         id: get-acr
         run: |
@@ -198,10 +212,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Node.js for Cypress
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: '20'
 
       - name: Install Cypress
         run: npm install -g cypress
