@@ -74,11 +74,21 @@ jobs:
       - name: Run frontend integration tests
         run: pnpm run test:integration
         working-directory: ./frontend
-
+  
   test-docker:
     name: Docker Testing
     runs-on: ubuntu-latest
     steps:
+    
+      - name: Get ACR Credentials and VM public IP
+        id: get-acr
+        run: |
+          echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+          echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
+          echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
+        working-directory: terraform
+      
       - name: Checkout code
         uses: actions/checkout@v2
 
