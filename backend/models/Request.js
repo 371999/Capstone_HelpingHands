@@ -21,6 +21,10 @@ const RequestSchema = new mongoose.Schema({
     itemId: {
         type: String, // Store itemId as a string
         required: true,
+    },
+    userName: {
+        type: String,
+        required: true,
     }
 }, { timestamps: true });
 
