@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm install 
 
 # Copy Jest configuration files (if they are needed for testing)
 COPY jest.config.js ./
