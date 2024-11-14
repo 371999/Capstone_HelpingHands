@@ -21,7 +21,7 @@ module.exports = {
     MINUTES: 20,
     SECONDS: 60,
     MILLISECONDS: 1000,
-    EMAILSUBJECT: "Flexi-Gym Portal Password reset token",
+    EMAILSUBJECT: "Helping-Hand Portal Password reset token",
     EMAILBODY : "Use the below password reset token to set a new password. \n\n ",
     RESETEMAILSENT : "Password reset link sent successfully on your email address.",
     RESETEMAILERROR: "Error occurred while sending password reset email.",
