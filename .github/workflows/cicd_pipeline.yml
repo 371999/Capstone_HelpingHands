@@ -5,6 +5,8 @@ on:
     branches:
       - shreyas
     paths:
+      - 'frontend/**'
+      - 'backend/**'
   workflow_dispatch:
     description: "Trigger workflow for manual CI/CD push"
 
