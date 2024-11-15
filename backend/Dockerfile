@@ -1,37 +1,39 @@
 # Stage 1: Development/Testing Stage
-FROM node:20 AS development
+FROM node:20.5.0 AS development
 
 WORKDIR /app
 
 # Copy dependencies
 COPY package.json package-lock.json ./
 
-# Install all dependencies (including dev dependencies)
+# Install all dependencies
 RUN npm ci
 
 # Copy application source code
 COPY . .
 
-# Run tests (optional)
-RUN npm test
+# Set environment variables for testing
+ENV NODE_ENV=test
+
+# Run tests with debugging
+RUN npm test || (cat /app/npm-debug.log; exit 1)
+
+# Build the application
+RUN npm run build
 
 # Stage 2: Production Stage
-FROM node:20-slim AS production
+FROM node:20.5.0-slim AS production
 
 WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
 
-# Copy only production dependencies from the previous stage
-COPY package.json package-lock.json ./
-RUN npm ci --only=production
-
-# Copy application source code from the previous stage
-COPY --from=development /app .
+# Copy built application from the development stage
+COPY --from=development /app /app
 
 # Expose the application's port
-EXPOSE 8080
+EXPOSE 3000
 
 # Use a non-root user for security
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
