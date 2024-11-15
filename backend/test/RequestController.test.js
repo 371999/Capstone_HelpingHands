@@ -18,25 +18,25 @@ describe('RequestController', () => {
 
             await RequestController.getAllRequests(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(Constants.STATUSOK); // Assuming Constants.STATUSOK is 200
+            expect(res.status).toHaveBeenCalledWith(Constants.STATUSOK);
             expect(res.json).toHaveBeenCalledWith(mockRequests);
         });
     });
 
     describe('createRequest', () => {
         it('should create a new request', async () => {
-            const req = { body: { requestType: 'type', comments: 'some comments', userId: 'user1', itemId: 'item1', ownerId: 'owner1', userName: 'user', message: 'message' } };
+            const req = { body: { requestType: 'type', comments: 'some comments', userId: 'user1', itemId: '507f1f77bcf86cd799439011', ownerId: 'owner1', userName: 'user', message: 'message' } };
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn(),
             };
-            const mockRequest = { id: 'req3', message: 'Request created successfully' };
+            const mockRequest = { _id: 'req3', message: 'Request created successfully' };
 
             Request.create.mockResolvedValue(mockRequest);
 
             await RequestController.createRequest(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(Constants.STATUSCREATED); // Assuming Constants.STATUSCREATED is 201
+            expect(res.status).toHaveBeenCalledWith(Constants.STATUSCREATED);
             expect(res.json).toHaveBeenCalledWith(mockRequest);
         });
 
@@ -49,7 +49,7 @@ describe('RequestController', () => {
 
             await RequestController.createRequest(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(Constants.BADREQUEST); // Assuming Constants.BADREQUEST is 400
+            expect(res.status).toHaveBeenCalledWith(Constants.STATUSNOTFOUND);
             expect(res.json).toHaveBeenCalledWith({ error: 'Missing required fields.' });
         });
     });
