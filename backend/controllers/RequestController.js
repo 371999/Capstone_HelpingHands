@@ -142,4 +142,14 @@ exports.updateRequestStatus = async (req, res) => {
             { status: 0 },
             { new: true }
         );
+
+        if (!updatedItem) {
+            return res.status(200).json({ error: 'Related item not found.' });
+        }
+
+        res.status(200).json({ message: 'Request status and comments updated successfully.', request: updatedRequest });
+    } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ error: 'Server error.' });
+    }
 };
