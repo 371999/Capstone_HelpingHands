@@ -1,7 +1,7 @@
 # Stage 1: Development/Testing Stage
 FROM node:20.5.0 AS development
 
-WORKDIR /app
+WORKDIR /app 
 
 # Copy dependencies
 COPY package.json package-lock.json ./
