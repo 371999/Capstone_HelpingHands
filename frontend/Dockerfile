@@ -1,13 +1,16 @@
 # Stage 1: Development/Testing Stage
-FROM node:20 AS development
+FROM node:20.5.0 AS development
 
 WORKDIR /app
- 
-# Copy dependencies   
+
+# Copy dependencies
 COPY package.json pnpm-lock.yaml ./
- 
-# Install all dependencies (including dev dependencies)
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+# Install dependencies and required tools with pinned versions
+RUN apt-get update && apt-get install -y curl && \
+    npm install -g pnpm@7.16.0 && \
+    pnpm install --frozen-lockfile && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy application source code
 COPY . .
@@ -19,19 +22,15 @@ RUN pnpm run test
 RUN pnpm run build
 
 # Stage 2: Production Stage
-FROM node:20-slim AS production
+FROM node:20.5.0-slim AS production
 
 WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
 
-# Copy only production dependencies from the previous stage
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile --prod
-
-# Copy built application from the previous stage
-COPY --from=development /app .
+# Copy built application from the development stage
+COPY --from=development /app /app
 
 # Expose the application's port
 EXPOSE 3000
