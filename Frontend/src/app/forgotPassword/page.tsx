@@ -34,7 +34,7 @@ export default function LoginPage() {
         }
 
         if (!emailRegex.test(email)) {
-            setFormValidation('Email Address format is invalid. Try Again!');
+            setFormValidation('The Email Address You have entered is invalid. Try Again!');
             return;
         }
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
                                 Reset Password
                             </Link>
                         </div>
-                        <Button className="w-full">Send Password Rest Link</Button>
+                        <Button className="w-full">Send Password Reset Link</Button>
                     </form>
                 </CardContent>
             </Card>
