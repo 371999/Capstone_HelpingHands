@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Set environment variables for testing
-ENV NODE_ENV=test
+ENV NODE_ENV=development
 
 # Run tests with debugging
 RUN npm test || (ls -la /app && echo "Test failed, but npm-debug.log not found. Check console output above for errors." && exit 1)
