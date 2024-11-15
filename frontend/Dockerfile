@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies and required tools with pinned versions
-RUN apt-get update && apt-get install -y curl && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl=7.68.0-1ubuntu2.12 && \
     npm install -g pnpm@7.16.0 && \
     pnpm install --frozen-lockfile && \
     rm -rf /var/lib/apt/lists/*
