@@ -81,3 +81,20 @@ exports.createRequest = async (req, res) => {
         res.status(Constants.INTERNALERRORSTATUS).json({ error: 'Server error.' });
     }
 };
+exports.deleteRequestById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find the request by id and delete it
+        const deletedRequest = await Request.findByIdAndDelete(id);
+
+        // Check if the request was found and deleted
+        if (!deletedRequest) {
+            return res.status(404).json({ error: 'Request not found.' });
+        }
+
+        res.status(200).json({ message: 'Request deleted successfully.' });
+    } catch (error) {
+        res.status(Constants.INTERNALERRORSTATUS).json({ error: 'Server error.' });
+    }
+};
