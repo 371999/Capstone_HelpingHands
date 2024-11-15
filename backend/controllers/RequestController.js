@@ -98,12 +98,12 @@ exports.deleteRequestById = async (req, res) => {
         res.status(Constants.INTERNALERRORSTATUS).json({ error: 'Server error.' });
     }
 };
-exports.getRequestByItem = async (request, response) => {
-    const { itemId } = request.params;
+exports.getRequestByItemAndUser = async (request, response) => {
+    const { itemId, userId } = request.params;
 
     try {
-        // Find the request that matches itemId
-        const userRequest = await Request.findOne({ itemId });
+        // Find the request that matches both itemId and userId
+        const userRequest = await Request.findOne({ itemId, userId });
         
         if (!userRequest) {
             return response.status(Constants.STATUSOK).json({ request: null });
