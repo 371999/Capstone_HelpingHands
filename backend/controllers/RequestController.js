@@ -86,7 +86,7 @@ exports.deleteRequestById = async (req, res) => {
         const { id } = req.params;
 
         // Find the request by id and delete it
-        const deletedRequest = await Request.findByIdAndDelete(id);
+        const deletedRequest = await Request.findByIdAndDelete(ids);
 
         // Check if the request was found and deleted
         if (!deletedRequest) {
