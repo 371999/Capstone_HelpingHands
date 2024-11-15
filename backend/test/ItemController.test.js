@@ -12,13 +12,13 @@ describe('ItemController', () => {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn(),
             };
-            const mockItem = { id: 'item123', name: 'Sample Item' };
+            const mockItem = { _id: 'item123', name: 'Sample Item' };
 
             Item.findById.mockResolvedValue(mockItem);
 
             await ItemController.getItemById(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(Constants.STATUSOK); // Assuming Constants.STATUSOK is 200
+            expect(res.status).toHaveBeenCalledWith(Constants.STATUSOK);
             expect(res.json).toHaveBeenCalledWith({ item: mockItem });
         });
 
@@ -33,7 +33,7 @@ describe('ItemController', () => {
 
             await ItemController.getItemById(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(Constants.NOTFOUND); // Assuming Constants.NOTFOUND is 404
+            expect(res.status).toHaveBeenCalledWith(Constants.NOTFOUND);
             expect(res.json).toHaveBeenCalledWith({ message: 'Item not found' });
         });
     });
@@ -51,7 +51,7 @@ describe('ItemController', () => {
 
             await ItemController.createItem(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(Constants.STATUSCREATED); // Assuming Constants.STATUSCREATED is 201
+            expect(res.status).toHaveBeenCalledWith(Constants.STATUSCREATED);
             expect(res.json).toHaveBeenCalledWith({ message: 'Item created successfully', itemId: mockItemId });
         });
     });
