@@ -36,9 +36,12 @@ server.get('/', (req, res) => {
     res.send(Constants.BASEROUTEMSG);
 });
 
-server.listen(SERVERPORT, () => {
-    console.log('Server is up and running successfully.');
-});
+// Conditionally start the server
+if (require.main === module) {
+    server.listen(SERVERPORT, () => {
+        console.log('Server is up and running successfully.');
+    });
+}
 
 module.exports = server;
 
