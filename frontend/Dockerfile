@@ -2,7 +2,7 @@
 FROM node:20 AS development
 
 WORKDIR /app
-
+ 
 # Copy dependencies 
 COPY package.json pnpm-lock.yaml ./
  
