@@ -93,7 +93,7 @@ exports.deleteRequestById = async (req, res) => {
             return res.status(404).json({ error: 'Request not found.' });
         }
 
-        res.status(404).json({ message: 'Request deleted successfully.' });
+        res.status(200).json({ message: 'Request deleted successfully.' });
     } catch (error) {
         res.status(Constants.INTERNALERRORSTATUS).json({ error: 'Server error.' });
     }
