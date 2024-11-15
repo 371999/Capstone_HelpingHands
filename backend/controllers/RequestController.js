@@ -144,7 +144,7 @@ exports.updateRequestStatus = async (req, res) => {
         );
 
         if (!updatedItem) {
-            return res.status(200).json({ error: 'Related item not found.' });
+            return res.status(404).json({ error: 'Related item not found.' });
         }
 
         res.status(200).json({ message: 'Request status and comments updated successfully.', request: updatedRequest });
