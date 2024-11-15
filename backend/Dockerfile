@@ -13,10 +13,11 @@ RUN npm ci
 COPY . .
 
 # Set environment variables for testing
-ENV NODE_ENV=development
+ENV NODE_ENV=test
+ENV JWT_SECRET=dummy_secret_for_tests
 
-# Run tests with debugging
-RUN npm test || (ls -la /app && echo "Test failed, but npm-debug.log not found. Check console output above for errors." && exit 1)
+# Run tests with improved error handling
+RUN npm test || (echo "Test failed. Displaying test output:" && cat /app/.npm/_logs/*-debug.log && exit 1)
 
 # Build the application
 RUN npm run build
@@ -33,7 +34,7 @@ ENV NODE_ENV=production
 COPY --from=development /app /app
 
 # Expose the application's port
-EXPOSE 3000
+EXPOSE 8080
 
 # Use a non-root user for security
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
