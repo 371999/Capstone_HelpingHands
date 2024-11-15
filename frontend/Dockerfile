@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-# Update npm, install pnpm, and install dependencies
+# Update npm, install pnpm, and install dependencies 
 RUN npm install -g npm@latest && \
     npm install -g pnpm@latest && \
     pnpm install --force
