@@ -1,5 +1,5 @@
 # Dockerfile for Frontend
-FROM node:20.5.1  # Specify an exact Node.js version
+FROM node:20.5.0 
 
 WORKDIR /app
 
