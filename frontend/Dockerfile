@@ -1,14 +1,14 @@
-# Dockerfile for Backend
+# Dockerfile for Frontend
 FROM node:20
- 
+  
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-
-RUN npm install 
+COPY package.json pnpm-lock.yaml ./ 
+ 
+RUN npm install -g pnpm && pnpm install
 
 COPY . .
 
-EXPOSE 8080
+EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["pnpm", "run", "dev"]
