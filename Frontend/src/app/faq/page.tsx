@@ -15,7 +15,7 @@ export default function FAQPage() {
             HelpingHands FAQ
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Get answers to your questions about the HelpingHands platform.
+           This are some frequently asked quetion about us.
           </p>
         </div>
       </div>
