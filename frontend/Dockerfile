@@ -3,7 +3,7 @@ FROM node:20.5.0 AS development
 
 WORKDIR /app
 
-# Copy dependencies
+# Copy dependencies 
 COPY package.json pnpm-lock.yaml ./
 
 # Consolidate commands and pin package versions 
