@@ -115,3 +115,31 @@ exports.getRequestByItem = async (request, response) => {
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
+exports.updateRequestStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log("id", id);
+
+        // Convert id to an ObjectId
+        const objectId = new mongoose.Types.ObjectId(id);
+
+        // Find the request by id and update its status to 1
+        const updatedRequest = await Request.findByIdAndUpdate(
+            objectId,
+            { status: 1, comments: req.body.comments },
+            { new: true } // Return the updated document
+        );
+
+        // Check if the request was found and updated
+        if (!updatedRequest) {
+            return res.status(404).json({ error: 'Request not found.' });
+        }
+
+        // Find the related item by itemId and update its status to 0
+        const itemId = updatedRequest.itemId;
+        const updatedItem = await Item.findByIdAndUpdate(
+            itemId,
+            { status: 0 },
+            { new: true }
+        );
+};
