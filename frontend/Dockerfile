@@ -4,7 +4,7 @@ FROM node:20.5.0 AS development
 WORKDIR /app
 
 # Copy dependencies 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml ./ 
 
 # Consolidate commands and pin package versions 
 RUN apt-get update && apt-get install -y --no-install-recommends curl=7.68.0-1ubuntu2.12 && \
