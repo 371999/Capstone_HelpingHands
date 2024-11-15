@@ -42,7 +42,7 @@ jobs:
       working-directory: backend
 
     - name: Run Backend Unit Tests
-      run: npm test
+      run: npm test -- --detectOpenHandles
       working-directory: backend
 
     # Lint Dockerfiles
