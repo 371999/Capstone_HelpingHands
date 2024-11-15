@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 // Item Schema with createdAt, updatedAt, and status fields
 const ItemSchema = new mongoose.Schema({
+       title: {
+        type: String,
+        required: false,
+    },
     userId: {
         type: String,
         required: false,
