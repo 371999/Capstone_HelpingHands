@@ -22,7 +22,3 @@ describe('Item API', () => {
     expect(response.status).toBe(404);
   });
 });
-
-afterAll(async () => {
-  await server.close(); // Properly close the server
-});
