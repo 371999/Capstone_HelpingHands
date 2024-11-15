@@ -22,7 +22,7 @@ spec:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_API_URL
-          value: "http://backend-service.backend.svc.cluster.local"
+          value: "http://backend-service.backend.svc.cluster.local:8080"
         - name: NEXT_PUBLIC_AUTH_URL
-          value: "http://backend-service.backend.svc.cluster.local"
+          value: "http://backend-service.backend.svc.cluster.local:8080"
  
