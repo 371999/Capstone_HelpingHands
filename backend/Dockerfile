@@ -4,7 +4,7 @@ FROM node:20.5.0 AS development
 WORKDIR /app
 
 # Copy dependencies
-COPY package.json package-lock.json ./ 
+COPY package.json package-lock.json ./
 
 # Install all dependencies
 RUN npm ci
@@ -16,7 +16,7 @@ COPY . .
 ENV NODE_ENV=test
 
 # Run tests with debugging
-RUN npm test || (cat /app/npm-debug.log; exit 1)
+RUN npm test || (ls -la /app && echo "Test failed, but npm-debug.log not found. Check console output above for errors." && exit 1)
 
 # Build the application
 RUN npm run build
