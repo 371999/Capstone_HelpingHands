@@ -10,16 +10,13 @@ COPY package.json pnpm-lock.yaml ./
 RUN apt-get update && apt-get install -y --no-install-recommends curl=7.68.0-1ubuntu2.12 && \
     npm install -g pnpm@7.16.0 && \
     pnpm install --frozen-lockfile && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy application source code
-COPY . .
-
-# Run tests
-RUN pnpm run test
-
-# Build the application
-RUN pnpm run build
+    rm -rf /var/lib/apt/lists/* && \
+    # Copy application source code
+    cp -R . . && \
+    # Run tests
+    pnpm run test && \
+    # Build the application
+    pnpm run build
 
 # Stage 2: Production Stage
 FROM node:20.5.0-slim AS production
