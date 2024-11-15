@@ -5,7 +5,7 @@ on:
     branches: 
       - shreyas  
     paths:
-      - '**/destroy_infrastructure.yml'
+      - '**/destroy_infrastructure.yml' 
   workflow_dispatch:
     description: "Trigger workflow to destroy Azure environment with Terraform"
 
