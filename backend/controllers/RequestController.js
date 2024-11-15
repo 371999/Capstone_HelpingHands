@@ -37,3 +37,47 @@ exports.getRequestsByUserId = async (req, res) => {
         res.status(500).json({ error: 'Server error.' });
     }
 };
+exports.createRequest = async (req, res) => {
+    try {
+        const { requestType, comments, userId, itemId, ownerId, userName, message } = req.body;
+
+        console.log("userName is:", userName);
+        // Validate required fields
+        if (!requestType || !userId || !itemId || !ownerId || !userName || !message) {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
+
+        // Cast itemId to ObjectId for querying
+        const objectId = new mongoose.Types.ObjectId(itemId);
+
+        // Check if item exists
+        const item = await Item.findById(objectId);
+        console.log("item", item);
+        if (!item) {
+            return res.status(404).json({ error: 'Item not found.' });
+        }
+
+        // Set requestDate to current date
+        const requestDate = new Date();
+
+        const newRequest = new Request({
+            requestType,
+            requestDate, // Automatically set to current date
+            comments,
+            userId,
+            itemId, // Keep as string in the schema
+            ownerId,
+            userName,
+            message
+        });
+        console.log("before");
+
+        const savedRequest = await newRequest.save();
+        console.log("after");
+
+        res.status(201).json(savedRequest);
+    } catch (error) {
+        console.log("error", error);
+        res.status(Constants.INTERNALERRORSTATUS).json({ error: 'Server error.' });
+    }
+};
