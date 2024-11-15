@@ -116,6 +116,7 @@ jobs:
           -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
           ${{ env.ACR_LOGIN_SERVER }}/backend:test npm test
 
+
 name: CI/CD for Application Deployment
 
 on:
