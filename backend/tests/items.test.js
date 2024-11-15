@@ -10,11 +10,10 @@ beforeAll(async () => {
   await mongoose.connect(url);
 });
 
-// Clean up the database and close the connection after all tests
 afterAll(async () => {
-  await mongoose.connection.close();
+  await server.close(); // Properly close the server
+  await mongoose.connection.close(); // Close database connection if using Mongoose
 });
-
 
 describe('Item API', () => {
 
