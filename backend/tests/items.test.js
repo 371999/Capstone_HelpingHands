@@ -11,7 +11,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await server.close(); // Properly close the server
   await mongoose.connection.close(); // Close database connection if using Mongoose
 });
 
@@ -22,4 +21,8 @@ describe('Item API', () => {
     const response = await request(server).get('/item/nonexistent@example.com');
     expect(response.status).toBe(404);
   });
+});
+
+afterAll(async () => {
+  await server.close(); // Properly close the server
 });
