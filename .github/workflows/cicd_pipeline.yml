@@ -162,7 +162,7 @@ jobs:
     - name: Build and Push Frontend and Backend Docker Images
       run: |
         docker buildx build --target production --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend
-        docker buildx build --target production --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend
+        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend
         docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
         docker push ${{ env.ACR_LOGIN_SERVER }}/backend:latest
 
