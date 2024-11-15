@@ -6,7 +6,7 @@ on:
       - shreyas
     paths: 
       - '**/setup_infrastructure.yml' 
-  workflow_dispatch:
+  workflow_dispatch: 
     description: "Trigger workflow to set up Azure environment with Terraform"
       
 # Special permissions required for OIDC authentication
