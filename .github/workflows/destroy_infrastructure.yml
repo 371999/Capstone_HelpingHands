@@ -1,7 +1,7 @@
 name: Terraform Destroy for Azure
 
 on:
-  push:
+  push: 
     branches: 
       - shreyas  
     paths:
