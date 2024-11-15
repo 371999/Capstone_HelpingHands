@@ -4,7 +4,7 @@ on:
   push:   
     branches:  
       - shreyas
-    paths:
+    paths: 
       - '**/setup_infrastructure.yml' 
   workflow_dispatch:
     description: "Trigger workflow to set up Azure environment with Terraform"
