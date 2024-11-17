@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: <ACR_LOGIN_SERVER>/frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://<VM_PUBLIC_IP>:8080"
+        - name: NEXT_PUBLIC_AUTH_URL
+          value: "http://<VM_PUBLIC_IP>:8080"
+        imagePullPolicy: Always
