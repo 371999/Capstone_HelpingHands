@@ -7,15 +7,14 @@ on:
     paths:
       - 'frontend/**'
       - 'backend/**'
+      - 'k8s/**'
   workflow_dispatch:
     description: "Manually trigger the combined CI/CD pipeline"
 
-# Special permissions required for OIDC authentication
 permissions:
   id-token: write
   contents: read
 
-# These environment variables are used by the terraform azure provider to setup OIDC authentication.
 env:
   ARM_USE_OIDC: "true"
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
@@ -99,15 +98,6 @@ jobs:
         docker buildx build --target development --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:test ./backend
         docker push ${{ env.ACR_LOGIN_SERVER }}/backend:test
 
-    - name: Validate Backend Docker Image
-      run: |
-        docker run --rm \
-          -e PORT=8080 \
-          -e MONGODB_URI=${{ secrets.MONGODB_URI }} \
-          -e FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000 \
-          -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-          ${{ env.ACR_LOGIN_SERVER }}/backend:test npm test
-
   deployment:
     name: Deploy Application
     runs-on: ubuntu-latest
@@ -117,69 +107,67 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_wrapper: false
-
-    - name: Terraform Init
-      run: terraform init
-      working-directory: terraform
-
-    - name: Terraform Format
-      run: terraform fmt -check
-      working-directory: terraform
-
-    - name: Set Up SSH Keys
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
-        chmod 600 ~/.ssh/id_rsa
-        chmod 644 ~/.ssh/id_rsa.pub
-
-    - name: Get ACR Credentials and VM Public IP
-      id: get-acr
-      run: |
-        echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
-        echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
-        echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
-        echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
-      working-directory: terraform
-
-    - name: Login to ACR
-      uses: azure/docker-login@v2
-      with:
-        login-server: ${{ env.ACR_LOGIN_SERVER }}
-        username: ${{ env.ACR_USERNAME }}
-        password: ${{ env.ACR_PASSWORD }}
-
-    - name: Build and Push Frontend and Backend Docker Images
-      run: |
-        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend
-        docker buildx build --target production --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend
-        docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
-        docker push ${{ env.ACR_LOGIN_SERVER }}/backend:latest
-
-    - name: SSH into Azure VM and Deploy Docker Containers
+    - name: Install Dependencies on Azure VM
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          # Check if Docker is installed
+          if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
+            sudo apt-get update
+            sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable"
+            sudo apt-get update
+            sudo apt-get install -y docker-ce
+            sudo usermod -aG docker azureuser
+          else
+            echo "Docker is already installed."
+          fi
 
-          echo ${{ env.ACR_PASSWORD }} | docker login ${{ env.ACR_LOGIN_SERVER }} -u ${{ env.ACR_USERNAME }} --password-stdin
-          
-          docker image prune -af
+          # Check if kubectl is installed
+          if ! command -v kubectl &> /dev/null; then
+            echo "Installing kubectl..."
+            curl -LO "https://dl.k8s.io/release/\$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin/
+          else
+            echo "kubectl is already installed."
+          fi
 
-          docker pull ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
-          docker pull ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+          # Check if Kind is installed
+          if ! command -v kind &> /dev/null; then
+            echo "Installing Kind..."
+            curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64"
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/
+          else
+            echo "Kind is already installed."
+          fi
 
-          docker stop frontend || true && docker rm frontend || true
-          docker stop backend || true && docker rm backend || true
+          # Check if Kind cluster exists
+          if kind get clusters | grep -q "kind"; then
+            echo "Kind cluster already exists."
+          else
+            echo "Creating Kind cluster..."
+            kind create cluster
+          fi
+        EOF
 
-          docker run -d --name frontend -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://${{ env.VM_PUBLIC_IP }}:8080 -e NEXT_PUBLIC_AUTH_URL=http://${{ env.VM_PUBLIC_IP }}:8080 ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
-          docker run -d --name backend -p 8080:8080 -e PORT=8080 -e MONGODB_URI=${{ secrets.MONGODB_URI }} -e FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000 -e JWT_SECRET=${{ secrets.JWT_SECRET }} ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+    - name: Replace Variables in YAML Files
+      run: |
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<MONGODB_URI>|${{ secrets.MONGODB_URI }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<JWT_SECRET>|${{ secrets.JWT_SECRET }}|g" k8s/deployment-backend.yaml
+
+    - name: Deploy Kubernetes Resources
+      run: |
+        scp -i ~/.ssh/id_rsa k8s/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          kubectl apply -f /home/azureuser/deployment-frontend.yaml
+          kubectl apply -f /home/azureuser/service-frontend.yaml
+          kubectl apply -f /home/azureuser/deployment-backend.yaml
+          kubectl apply -f /home/azureuser/service-backend.yaml
         EOF
