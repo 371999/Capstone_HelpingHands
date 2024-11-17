@@ -98,6 +98,15 @@ jobs:
         docker buildx build --target development --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:test ./backend
         docker push ${{ env.ACR_LOGIN_SERVER }}/backend:test
 
+    - name: Validate Backend Docker Image
+      run: |
+        docker run --rm \
+          -e PORT=8080 \
+          -e MONGODB_URI=${{ secrets.MONGODB_URI }} \
+          -e FRONTEND_URL=http://${{ env.VM_PUBLIC_IP }}:3000 \
+          -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+          ${{ env.ACR_LOGIN_SERVER }}/backend:test npm test
+
   deployment:
     name: Deploy Application
     runs-on: ubuntu-latest
@@ -106,6 +115,55 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform
+
+    - name: Terraform Format
+      run: terraform fmt -check
+      working-directory: terraform
+
+    - name: Set Up SSH Keys
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
+
+    - name: Get ACR Credentials and VM Public IP
+      id: get-acr
+      run: |
+        echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+        echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
+        echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
+        echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
+      working-directory: terraform
+
+    - name: Login to ACR
+      uses: azure/docker-login@v2
+      with:
+        login-server: ${{ env.ACR_LOGIN_SERVER }}
+        username: ${{ env.ACR_USERNAME }}
+        password: ${{ env.ACR_PASSWORD }}
+
+    - name: Build and Push Frontend and Backend Docker Images
+      run: |
+        docker buildx build --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend
+        docker buildx build --target production --platform linux/amd64 -t ${{ env.ACR_LOGIN_SERVER }}/backend:latest ./backend
+        docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+        docker push ${{ env.ACR_LOGIN_SERVER }}/backend:latest
 
     - name: Install Dependencies on Azure VM
       run: |
