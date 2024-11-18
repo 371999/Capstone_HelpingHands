@@ -225,8 +225,6 @@ jobs:
       run: |
         sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-frontend.yaml
         sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-backend.yaml
-        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-frontend.yaml
-        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-backend.yaml
         sed -i "s|<MONGODB_URI>|${{ secrets.MONGODB_URI }}|g" k8s/deployment-backend.yaml
         sed -i "s|<JWT_SECRET>|${{ secrets.JWT_SECRET }}|g" k8s/deployment-backend.yaml
 
