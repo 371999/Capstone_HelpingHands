@@ -29,5 +29,5 @@ spec:
         - name: JWT_SECRET
           value: "<JWT_SECRET>" # Replace with actual JWT secret
         - name: FRONTEND_URL
-          value: "http://<VM_PUBLIC_IP>:30030" # Replace with actual VM public IP
+          value: "http://localhost:3000" # Replace with actual VM public IP
         imagePullPolicy: Always
