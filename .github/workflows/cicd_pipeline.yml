@@ -219,7 +219,7 @@ jobs:
             --docker-server=${{ env.ACR_LOGIN_SERVER }} \
             --docker-username=${{ env.ACR_USERNAME }} \
             --docker-password=${{ env.ACR_PASSWORD }} \
-            --docker-email=old_user_1468642@seneca-caa900naa.cloudlabs.ai || true
+            --docker-email=old_user_1468642@seneca-caa900naa.cloudlabs.ai
         EOF
 
     - name: Replace Variables in YAML Files
