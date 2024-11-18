@@ -14,18 +14,20 @@ spec:
       labels:
         app: backend
     spec:
+      imagePullSecrets:
+      - name: acr-secret # Reference the secret created for ACR
       containers:
       - name: backend
-        image: <ACR_LOGIN_SERVER>/backend:latest
+        image: <ACR_LOGIN_SERVER>/backend:latest # Replace with actual ACR login server
         ports:
         - containerPort: 8080
         env:
         - name: PORT
           value: "8080"
         - name: MONGODB_URI
-          value: "<MONGODB_URI>"
+          value: "<MONGODB_URI>" # Replace with actual MongoDB URI
         - name: JWT_SECRET
-          value: "<JWT_SECRET>"
+          value: "<JWT_SECRET>" # Replace with actual JWT secret
         - name: FRONTEND_URL
-          value: "http://<VM_PUBLIC_IP>:30030"
+          value: "http://<VM_PUBLIC_IP>:30030" # Replace with actual VM public IP
         imagePullPolicy: Always
