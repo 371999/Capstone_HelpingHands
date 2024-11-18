@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-deployment
+  labels:
+    app: backend
 spec:
   replicas: 3
   selector:
@@ -22,8 +24,8 @@ spec:
           value: "8080"
         - name: MONGODB_URI
           value: "<MONGODB_URI>"
-        - name: FRONTEND_URL
-          value: "http://<VM_PUBLIC_IP>:3000"
         - name: JWT_SECRET
           value: "<JWT_SECRET>"
+        - name: FRONTEND_URL
+          value: "http://<VM_PUBLIC_IP>:30080"
         imagePullPolicy: Always
