@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
+  labels:
+    app: frontend
 spec:
   replicas: 3
   selector:
@@ -12,14 +14,16 @@ spec:
       labels:
         app: frontend
     spec:
+      imagePullSecrets:
+      - name: acr-secret # Reference the Kubernetes secret for ACR authentication
       containers:
       - name: frontend
-        image: <ACR_LOGIN_SERVER>/frontend:latest
+        image: <ACR_LOGIN_SERVER>/frontend:latest # Replace with actual ACR login server
         ports:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_API_URL
-          value: "http://<VM_PUBLIC_IP>:30030"
+          value: "http://<VM_PUBLIC_IP>:30030" # Replace <VM_PUBLIC_IP> with the public IP of your VM
         - name: NEXT_PUBLIC_AUTH_URL
-          value: "http://<VM_PUBLIC_IP>:30030"
+          value: "http://<VM_PUBLIC_IP>:30030" # Replace <VM_PUBLIC_IP> with the public IP of your VM
         imagePullPolicy: Always
