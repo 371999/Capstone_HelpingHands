@@ -2,7 +2,7 @@
 FROM node:20.5.0
    
 WORKDIR /app  
- 
+  
 COPY package.json pnpm-lock.yaml ./ 
   
 # Update npm, install pnpm, and install dependencies 
