@@ -7,7 +7,6 @@ on:
     paths:
       - 'frontend/**'
       - 'backend/**'
-      - 'k8s/**'
   workflow_dispatch:
     description: "Manually trigger the combined CI/CD pipeline"
 
