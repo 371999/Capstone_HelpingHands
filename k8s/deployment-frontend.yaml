@@ -19,7 +19,7 @@ spec:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_API_URL
-          value: "http://<VM_PUBLIC_IP>:8080"
+          value: "http://<VM_PUBLIC_IP>:30030"
         - name: NEXT_PUBLIC_AUTH_URL
-          value: "http://<VM_PUBLIC_IP>:8080"
+          value: "http://<VM_PUBLIC_IP>:30030"
         imagePullPolicy: Always
