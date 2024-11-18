@@ -23,7 +23,7 @@ spec:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_API_URL
-          value: "http://<VM_PUBLIC_IP>:30030" # Replace <VM_PUBLIC_IP> with the public IP of your VM
+          value: "http://<VM_PUBLIC_IP>:30080" # Replace <VM_PUBLIC_IP> with the public IP of your VM
         - name: NEXT_PUBLIC_AUTH_URL
-          value: "http://<VM_PUBLIC_IP>:30030" # Replace <VM_PUBLIC_IP> with the public IP of your VM
+          value: "http://<VM_PUBLIC_IP>:30080" # Replace <VM_PUBLIC_IP> with the public IP of your VM
         imagePullPolicy: Always
