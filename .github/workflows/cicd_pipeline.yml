@@ -201,12 +201,19 @@ jobs:
             echo "Kind is already installed."
           fi
 
+    - name: Copy Kind Config File to Azure VM
+      run: |
+        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa k8s/kind-config.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/k8s/kind-config.yaml
+
+    - name: Create Kind Cluster if Not Exists
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
           # Check if Kind cluster exists
           if kind get clusters | grep -q "kind"; then
-            echo "Kind cluster already exists."
+            echo "Kind cluster already exists. Skipping creation."
           else
-            echo "Creating Kind cluster..."
-            kind create cluster
+            echo "Creating Kind cluster using kind-config.yaml..."
+            kind create cluster --config /home/azureuser/k8s/kind-config.yaml
           fi
         EOF
 
