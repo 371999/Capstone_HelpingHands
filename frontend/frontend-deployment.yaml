@@ -22,7 +22,7 @@ spec:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_API_URL
-          value: "http://20.168.232.193:8080"
+          value: "http://backend-service:8080"
         - name: NEXT_PUBLIC_AUTH_URL
-          value: "http://20.168.232.193:8080"
+          value: "http://backend-service:8080"
  
