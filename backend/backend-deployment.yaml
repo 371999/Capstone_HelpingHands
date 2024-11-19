@@ -24,7 +24,7 @@ spec:
         - name: MONGODB_URI
           value: "mongodb+srv://admin:admin@helpinghands.tqb84.mongodb.net/HelpingHands"
         - name: FRONTEND_URL
-          value: "http://172.171.205.240:3000"
+          value: "http://40.117.148.140:3000"
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
