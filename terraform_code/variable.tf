@@ -14,7 +14,7 @@ variable "location" {
 variable "ssh_public_key" {
   description = "SSH public key for VM access"
   type        = string
-  default     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDi6qMgXKA1xAxU/4nlWYPsjM51EW5RxRxAA0xyFf4lE3GOLsQnwljUSudiV0tLG1w6I9lWg/f4lcSg/51LMHUIyzKenT4BNGLiOXDBfM92Do9YrY09Lm1xyb0SCKGi75fs8LfNHiqjVGxeM4cmC0GJ57vSuKOpfBhj6bDhcN+4u3BhR+JPf8ObT9DBcComBqEus6kpvX+b0TvB2FGkvMQzj7XS3i0wNm5bZ4iqEywwsHJPKJ7X0VzEWImDMkLA0vFpa8WZNdNzZgzz+s+DeYZdUwJ6XNGzCpV5qRYAWPmn8zDEcmKfT8HVvoRI6r7nbj5Lz+ntk5F/YJOAPFZbangP odl_user@SandboxHost-638675720437697956"
+  default     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPh51uQ5QxirCCHWYqQZ7LZ2Fy2f6MtEVQln85MG66/y4+5syQEh9eRiVkSoh1JCsA1x25F9LPNRORJyfMC2QujcrPKh4aJwFaVi67FO3hKpfTZXPX/lPlqoj5gZKj695RCQiqt6NwOzbSJjDinoAqD8Md3Y4YXWLVKJAi/aRRBccnZL4OESsSF7QzTaIrFoUZygmXqNZfDxw9mwGAviGstVAn9d79ncUHOoVlppWbNbMPoPZ9f6vFK+HFV8e9QuSvF/+Sngghr0BKrwrMozsD9RiuG9hZb23oFIrrwiFQgy3iCK9+4Gw0xibZq3Cbw0uEQMDuFbMPCC4QURe9OJMP odl_user@SandboxHost-638675693134097800"
 }
 variable "subscription_id" {
   description = "Azure subscription ID"
