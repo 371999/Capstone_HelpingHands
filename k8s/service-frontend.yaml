@@ -11,4 +11,3 @@ spec:
   ports:
   - port: 3000         # Port on the service
     targetPort: 3000   # Port on the frontend container
-    nodePort: 30030    # NodePort for external access (optional, Kubernetes can assign automatically)
