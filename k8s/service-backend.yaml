@@ -5,9 +5,9 @@ metadata:
   labels:
     app: backend
 spec:
-  type: ClusterIP  # Default type, internal only
+  type: NodePort
   selector:
     app: backend
   ports:
-  - port: 8080         # Internal service port
-    targetPort: 8080   # Target port on the container
+  - port: 8080
+    targetPort: 8080
