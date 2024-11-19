@@ -25,4 +25,6 @@ spec:
           value: "http://backend-service:8080"
         - name: NEXT_PUBLIC_AUTH_URL
           value: "http://backend-service:8080"
+        - name: BACKEND_URL
+          value: "http://backend-service:8080"
  
