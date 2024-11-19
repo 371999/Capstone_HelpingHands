@@ -6,3 +6,6 @@ nodes:
   - containerPort: 30030 # The NodePort inside the Kind container
     hostPort: 30030      # Map this to the same port on the host machine
     protocol: TCP
+  - containerPort: 30080 # The NodePort inside the Kind container
+    hostPort: 30080      # Map this to the same port on the host machine
+    protocol: TCP
