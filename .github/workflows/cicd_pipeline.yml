@@ -235,7 +235,8 @@ jobs:
         sed -i "s|<MONGODB_URI>|${{ secrets.MONGODB_URI }}|g" k8s/deployment-backend.yaml
         sed -i "s|<JWT_SECRET>|${{ secrets.JWT_SECRET }}|g" k8s/deployment-backend.yaml
         sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-backend.yaml
-
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-frontend.yaml
+        
     - name: Deploy Kubernetes Resources
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
