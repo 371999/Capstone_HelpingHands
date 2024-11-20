@@ -68,15 +68,12 @@ jobs:
         echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
       working-directory: terraform
 
-    - name: Install yq
+    - name: Replace Image Version in Deployment YAMLs
       run: |
-        sudo wget https://github.com/mikefarah/yq/releases/download/v4.34.1/yq_linux_amd64 -O /usr/bin/yq
-        sudo chmod +x /usr/bin/yq
-
-    - name: Replace Variables in YAML Files
-      run: |
-        yq eval ".spec.template.spec.containers[0].image = \"${{ env.ACR_LOGIN_SERVER }}/frontend:${{ github.event.inputs.image_version }}\"" -i k8s/deployment-frontend.yaml
-        yq eval ".spec.template.spec.containers[0].image = \"${{ env.ACR_LOGIN_SERVER }}/backend:${{ github.event.inputs.image_version }}\"" -i k8s/deployment-backend.yaml
+        # Replace backend image version
+        sed -i "s|image: .*/backend:.*|image: ${ACR_LOGIN_SERVER}/backend:${{ github.event.inputs.image_version }}|g" k8s/deployment-backend.yaml
+        # Replace frontend image version
+        sed -i "s|image: .*/frontend:.*|image: ${ACR_LOGIN_SERVER}/frontend:${{ github.event.inputs.image_version }}|g" k8s/deployment-frontend.yaml
 
     - name: Login to ACR
       uses: azure/docker-login@v2
