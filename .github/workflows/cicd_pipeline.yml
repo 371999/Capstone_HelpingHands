@@ -204,6 +204,8 @@ jobs:
     - name: Copy Kind Config File to Azure VM
       run: |
         scp -i ~/.ssh/id_rsa k8s/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+        
+    - name: Create Kind Cluster if Not Exists
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
           # Check if Kind cluster exists
