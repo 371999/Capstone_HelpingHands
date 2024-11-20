@@ -6,12 +6,9 @@ on:
       - shreyas
     paths:
       - '**/rollback_image_cicd_pipeline.yml'
-  workflow_dispatch:
-    inputs:
-      image_version:
-        description: "Specify the image version to roll back to (e.g., v1, v2)"
-        required: true
-        default: v117
+  deployment_status:
+    types:
+      - failure # Automatically triggers on deployment failure
 
 permissions:
   id-token: write
@@ -23,6 +20,7 @@ env:
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  IMAGE_TAG: "v117" # Default tag for rollback (update as needed)
 
 jobs:
   rollback:
@@ -50,7 +48,7 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
       working-directory: terraform
-    
+
     - name: Set Up SSH Keys
       run: |
         mkdir -p ~/.ssh
@@ -70,10 +68,10 @@ jobs:
 
     - name: Replace Image Version in Deployment YAMLs
       run: |
-        # Replace backend image version
-        sed -i "s|image: .*/backend:.*|image: ${ACR_LOGIN_SERVER}/backend:${{ github.event.inputs.image_version }}|g" k8s/deployment-backend.yaml
-        # Replace frontend image version
-        sed -i "s|image: .*/frontend:.*|image: ${ACR_LOGIN_SERVER}/frontend:${{ github.event.inputs.image_version }}|g" k8s/deployment-frontend.yaml
+        # Replace frontend image tag
+        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-frontend.yaml
+        # Replace backend image tag
+        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-backend.yaml
 
     - name: Login to ACR
       uses: azure/docker-login@v2
