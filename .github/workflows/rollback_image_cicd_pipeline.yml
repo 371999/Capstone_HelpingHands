@@ -1,6 +1,11 @@
 name: Rollback CI/CD Pipeline
 
 on:
+  push:
+    branches:
+      - shreyas
+    paths:
+      
   workflow_dispatch:
     inputs:
       image_version:
