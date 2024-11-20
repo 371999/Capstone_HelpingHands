@@ -6,9 +6,11 @@ on:
       - shreyas
     paths:
       - '**/rollback_image_cicd_pipeline.yml'
-  deployment_status:
+  workflow_run:
+    workflows:
+      - Combined CI/CD Pipeline # Name of the workflow to monitor
     types:
-      - failure # Automatically triggers on deployment failure
+      - completed # Trigger on completion of the Combined CI/CD Pipelinee
 
 permissions:
   id-token: write
@@ -26,6 +28,7 @@ jobs:
   rollback:
     name: Rollback Application
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }} # Run only if the Combined CI/CD Pipeline failed
 
     steps:
     - name: Checkout Code
