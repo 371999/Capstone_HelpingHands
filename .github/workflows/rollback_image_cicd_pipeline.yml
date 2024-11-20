@@ -1,0 +1,75 @@
+name: Rollback CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_version:
+        description: "Specify the image version to roll back to (e.g., v1, v2)"
+        required: true
+        default: "v1"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+
+jobs:
+  rollback:
+    name: Rollback Application
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+    - name: Set Up SSH Keys
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
+
+    - name: Get ACR Credentials and VM Public IP
+      id: get-acr
+      run: |
+        echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+        echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
+        echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
+        echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
+      working-directory: terraform
+
+    - name: Replace Variables in YAML Files
+      run: |
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-backend.yaml
+        sed -i "s|latest|${{ github.event.inputs.image_version }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|latest|${{ github.event.inputs.image_version }}|g" k8s/deployment-backend.yaml
+
+    - name: Rollback Kubernetes Resources
+      run: |
+        scp -i ~/.ssh/id_rsa k8s/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          kubectl apply -f /home/azureuser/deployment-frontend.yaml
+          kubectl apply -f /home/azureuser/service-frontend.yaml
+          kubectl apply -f /home/azureuser/deployment-backend.yaml
+          kubectl apply -f /home/azureuser/service-backend.yaml
+        EOF
+
+    - name: Confirm Rollback
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          kubectl rollout status deployment/frontend-deployment
+          kubectl rollout status deployment/backend-deployment
+        EOF
