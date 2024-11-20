@@ -66,13 +66,6 @@ jobs:
         echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
       working-directory: terraform
 
-    - name: Replace Image Version in Deployment YAMLs
-      run: |
-        # Replace frontend image tag
-        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-frontend.yaml
-        # Replace backend image tag
-        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-backend.yaml
-
     - name: Login to ACR
       uses: azure/docker-login@v2
       with:
@@ -90,6 +83,17 @@ jobs:
             --docker-password=${{ env.ACR_PASSWORD }} \
             --docker-email=old_user_1468642@seneca-caa900naa.cloudlabs.ai
         EOF
+
+    - name: Replace Variables in YAML Files
+      run: |
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<MONGODB_URI>|${{ secrets.MONGODB_URI }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<JWT_SECRET>|${{ secrets.JWT_SECRET }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-backend.yaml
 
     - name: Rollback Kubernetes Resources
       run: |
