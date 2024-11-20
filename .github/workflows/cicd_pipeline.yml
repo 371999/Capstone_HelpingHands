@@ -252,3 +252,8 @@ jobs:
           kubectl apply -f /home/azureuser/deployment-backend.yaml
           kubectl apply -f /home/azureuser/service-backend.yaml
         EOF
+
+    - name: Mark Workflow Success or Failure
+      if: always()
+      run: |
+        exit ${{ job.status == 'success' && 0 || 1 }}
