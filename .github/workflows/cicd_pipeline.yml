@@ -203,9 +203,7 @@ jobs:
 
     - name: Copy Kind Config File to Azure VM
       run: |
-        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa k8s/kind-config.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/k8s/kind-config.yaml
-
-    - name: Create Kind Cluster if Not Exists
+        scp -i ~/.ssh/id_rsa k8s/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
           # Check if Kind cluster exists
@@ -213,7 +211,7 @@ jobs:
             echo "Kind cluster already exists. Skipping creation."
           else
             echo "Creating Kind cluster using kind-config.yaml..."
-            kind create cluster --config /home/azureuser/k8s/kind-config.yaml
+            kind create cluster --config /home/azureuser/kind-config.yaml
           fi
         EOF
 
@@ -238,7 +236,6 @@ jobs:
 
     - name: Deploy Kubernetes Resources
       run: |
-        scp -i ~/.ssh/id_rsa k8s/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
           kubectl apply -f /home/azureuser/deployment-frontend.yaml
           kubectl apply -f /home/azureuser/service-frontend.yaml
