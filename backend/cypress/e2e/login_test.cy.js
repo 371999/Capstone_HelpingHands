@@ -10,8 +10,8 @@ describe('Successful Login Test', () => {
         cy.contains('Login').should('be.visible');
 
         // Fill in the login form
-        cy.get('input[type="email"]').type('italiya5981@gmail.com');
-        cy.get('input[type="password"]').type('abcd@1234');
+        cy.get('#email').type('italiya5981@gmail.com');
+        cy.get('#password').type('abcd@1234');
 
         // Submit the form
         cy.get('button').contains('Login').should('not.be.disabled').click();
