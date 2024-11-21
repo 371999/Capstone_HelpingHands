@@ -64,3 +64,9 @@ exports.deleteUserProfileById = async (request, response) => {
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
+
+exports.getAllUsersByFirstName = async (request, response) => {
+        // Fetch all profiles sorted by firstName in ascending order
+        const userProfiles = await Profile.find().sort({ firstName: 1 }).select(Constants.REMOVEUSERCOLUMNPASSWORD);
+        response.json({ userProfiles });
+};
