@@ -73,5 +73,6 @@ exports.getAllUsersByFirstName = async (request, response) => {
         response.json({ userProfiles });
     } catch (error) {
         console.log(error.message);
+        response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
