@@ -151,7 +151,12 @@ exports.getOwnerItems = async (request, response) => {
     }
 };
 exports.getItemsByUpdatedDate = async (request) => {
+    try {
         console.log("this is the method");
+        // Fetch items sorted by updatedAt in ascending order
         const items = await Item.find().sort({ updatedAt: 1 });
-        console.log("items", items) 
+        console.log("items", items);
+    } catch (error) {
+        console.log(error.message);
+    }
 };
