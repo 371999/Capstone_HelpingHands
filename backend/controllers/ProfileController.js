@@ -66,7 +66,12 @@ exports.deleteUserProfileById = async (request, response) => {
 };
 
 exports.getAllUsersByFirstName = async (request, response) => {
+    try {
         // Fetch all profiles sorted by firstName in ascending order
         const userProfiles = await Profile.find().sort({ firstName: 1 }).select(Constants.REMOVEUSERCOLUMNPASSWORD);
+
         response.json({ userProfiles });
+    } catch (error) {
+        console.log(error.message);
+    }
 };
