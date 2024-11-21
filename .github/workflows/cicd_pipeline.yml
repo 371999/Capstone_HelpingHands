@@ -5,8 +5,7 @@ on:
     branches:
       - shreyas
     paths:
-      - 'frontend/**'
-      - 'backend/**'
+
   workflow_dispatch:
     description: "Manually trigger the combined CI/CD pipeline"
 
