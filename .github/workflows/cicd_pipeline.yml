@@ -254,6 +254,8 @@ jobs:
         EOF
 
     - name: Mark Workflow Success or Failure
-      if: always()
+      if: failure()
       run: |
-        exit ${{ job.status == 'success' && 0 || 1 }}
+        echo "Workflow failed. Marking failure."
+        exit 1
+
