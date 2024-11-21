@@ -42,5 +42,4 @@ const startServer = (port = process.env.PORT || 8080) => {
         console.log(`Server is running on port ${port}`);
     });
 };
-
-module.exports = server;
+module.exports = { server, startServer };
