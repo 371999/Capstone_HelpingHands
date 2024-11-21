@@ -129,13 +129,13 @@ exports.getOwnerItems = async (request, response) => {
 
     try {
         const filter = { }; // Ensure only active items are retrieved
-        if (status) {
-            filter.status = status; // Add status filter if provided
-        }
+        // if (status) {
+        //     filter.status = status; // Add status filter if provided
+        // }
         
-        if (type) {
-            filter.type = type; // Add type filter if provided
-        }
+        // if (type) {
+        //     filter.type = type; // Add type filter if provided
+        // }
         if(userId) {
             filter.userId = userId;
         } else {
