@@ -142,6 +142,7 @@ exports.getOwnerItems = async (request, response) => {
             return response.status(Constants.FORBIDDEN).json({ message: 'User Id is not present' });
         }
         console.log("filter", filter);
+        const items = await Item.find(filter).sort({ createdAt: -1 });
         console.log("items", items);
         response.json({ items });
     } catch (error) {
