@@ -13,6 +13,7 @@ beforeAll(async () => {
 // Clean up the database and close the connection after all tests
 afterAll(async () => {
   await mongoose.connection.close();
+  server.close();
 });
 
 
