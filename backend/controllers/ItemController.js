@@ -150,13 +150,15 @@ exports.getOwnerItems = async (request, response) => {
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
-exports.getItemsByUpdatedDate = async (request) => {
+exports.getItemsByUpdatedDate = async (request, response) => {
     try {
         console.log("this is the method");
         // Fetch items sorted by updatedAt in ascending order
         const items = await Item.find().sort({ updatedAt: 1 });
         console.log("items", items);
+        response.json({ items });
     } catch (error) {
         console.log(error.message);
+        response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
