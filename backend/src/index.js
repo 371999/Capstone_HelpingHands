@@ -36,10 +36,8 @@ server.get('/', (req, res) => {
     res.send(Constants.BASEROUTEMSG);
 });
 
-// Export the server and a function to start the server
-const startServer = (port = process.env.PORT || 8080) => {
-    return server.listen(port, () => {
-        console.log(`Server is running on port ${port}`);
-    });
-};
-module.exports = { server, startServer };
+server.listen(SERVERPORT, () => {
+    console.log('Server is up and running successfully.');
+});
+
+module.exports = server;
