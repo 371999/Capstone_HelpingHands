@@ -36,7 +36,7 @@ server.get('/', (req, res) => {
     res.send(Constants.BASEROUTEMSG);
 });
 
-server.listen(SERVERPORT, () => {
+const server = app.listen(SERVERPORT, () => {
     console.log('Server is up and running successfully.');
 });
 
