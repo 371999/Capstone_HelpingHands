@@ -1,4 +1,5 @@
 const express = require('express');
+const app = express();
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const Constants = require('./utils/Constants');
@@ -9,7 +10,7 @@ const itemRoute = require('./routes/ItemRoute');
 const requestRoute = require('./routes/RequestRoute');
 const cors = require('cors');
 
-server.use(cors());
+app.use(cors()); // Use `app` here
 
 const SERVERPORT = process.env.PORT || 8080;
 server.use(bodyParser.json({ limit: "50mb" }));
