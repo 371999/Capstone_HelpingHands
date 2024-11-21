@@ -38,4 +38,4 @@ const server = app.listen(SERVERPORT, () => { // Create the HTTP server
     console.log('Server is up and running successfully on port ' + SERVERPORT);
 });
 
-module.exports = { app, server };
+module.exports = server;
