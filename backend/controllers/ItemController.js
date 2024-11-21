@@ -123,3 +123,28 @@ exports.getItems = async (request, response) => {
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
+exports.getOwnerItems = async (request, response) => {
+    const userId = request.params.userId;
+    console.log("userId", userId);
+
+    try {
+        const filter = { }; // Ensure only active items are retrieved
+        if (status) {
+            filter.status = status; // Add status filter if provided
+        }
+        
+        if (type) {
+            filter.type = type; // Add type filter if provided
+        }
+        if(userId) {
+            filter.userId = userId;
+        } else {
+            return response.status(Constants.FORBIDDEN).json({ message: 'User Id is not present' });
+        }
+        console.log("items", items);
+        response.json({ items });
+    } catch (error) {
+        console.log(error.message);
+        response.status(Constants.INTERNALERRORSTATUS).send('Server error');
+    }
+};
