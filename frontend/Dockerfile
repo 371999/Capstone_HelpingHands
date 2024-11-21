@@ -1,6 +1,6 @@
 # Dockerfile for Frontend
 FROM node:20.5.0 
-    
+     
 WORKDIR /app     
      
 COPY package.json pnpm-lock.yaml ./  
