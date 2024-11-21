@@ -6,6 +6,7 @@ const {userAuthorization} = require('../middlewares/Authorization');
 
 //Routes for user profile record
 router.get('/:id',authenticate, getUserProfileById);
+router.get('/get-all',authenticate, getAllUsersByFirstName);
 router.put('/:id',authenticate,userAuthorization, updateUserProfileById);
 router.delete('/:id',authenticate,userAuthorization, deleteUserProfileById);
 
