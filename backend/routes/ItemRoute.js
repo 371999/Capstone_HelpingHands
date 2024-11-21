@@ -8,6 +8,7 @@ router.get('/', getItems);
 router.post("/", createItem);
 router.put('/:id', updateItemById);
 router.delete('/:id', deleteItemById);
+router.get('/owner/:userId', getownerItems);
 //router.delete('/:id',authenticate,userAuthorization, deleteUserProfileById);
 
 module.exports = router;
