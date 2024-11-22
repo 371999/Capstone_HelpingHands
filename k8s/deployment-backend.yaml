@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,8 +10,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1 # Number of additional pods that can be created during the update
-      maxUnavailable: 1 # Number of pods that can be unavailable during the update
+      maxSurge: 1  # Number of additional pods during the update
+      maxUnavailable: 1  # Number of pods that can be unavailable
   selector:
     matchLabels:
       app: backend
@@ -20,19 +21,19 @@ spec:
         app: backend
     spec:
       imagePullSecrets:
-      - name: acr-secret # Reference the secret created for ACR
+        - name: acr-secret  # ACR secret reference
       containers:
-      - name: backend
-        image: <ACR_LOGIN_SERVER>/backend:latest # Replace with actual ACR login server
-        ports:
-        - containerPort: 8080
-        env:
-        - name: PORT
-          value: "8080"
-        - name: MONGODB_URI
-          value: "<MONGODB_URI>" # Replace with actual MongoDB URI
-        - name: JWT_SECRET
-          value: "<JWT_SECRET>" # Replace with actual JWT secret
-        - name: FRONTEND_URL
-          value: "http://<VM_PUBLIC_IP>:30030" # Replace with actual VM public IP
-        imagePullPolicy: Always
+        - name: backend
+          image: <ACR_LOGIN_SERVER>/backend:latest  # Replace with actual ACR server
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: MONGODB_URI
+              value: "<MONGODB_URI>"  # Replace with MongoDB URI
+            - name: JWT_SECRET
+              value: "<JWT_SECRET>"  # Replace with JWT secret
+            - name: FRONTEND_URL
+              value: "http://<VM_PUBLIC_IP>:30030"  # Replace with VM public IP
+          imagePullPolicy: Always
