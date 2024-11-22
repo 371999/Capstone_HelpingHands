@@ -71,7 +71,7 @@ jobs:
     - name: Set Terraform Variables for Validation
       working-directory: terraform
       run: |
-        echo 'variable "private_key" { default = "dummy_private_key_for_validation" }' > validiation_variables.tf
+        echo 'variable "private_key" { default = "dummy_private_key_for_validation" }' > rm_variables.tf
         
     - name: Validate Terraform Files
       working-directory: terraform
@@ -90,9 +90,23 @@ jobs:
         # Run specific workflows or jobs as needed
         act -j validate -P ubuntu-latest=catthehacker/ubuntu:act-latest
 
-    - name: Lint JavaScript/TypeScript Files
+    - name: Install Backend Dependencies
+      working-directory: backend
+      run: npm install
+
+    - name: Lint Backend JavaScript/TypeScript Files
+      working-directory: backend
       run: |
-        eslint -c .eslintrc.js backend/**/*.js backend/**/*.ts frontend/**/*.js frontend/**/*.ts
+        eslint -c .eslintrc.js **/*.js **/*.ts
+
+    - name: Install Frontend Dependencies
+      working-directory: frontend
+      run: npm install
+
+    - name: Lint Frontend JavaScript/TypeScript Files
+      working-directory: frontend
+      run: |
+        eslint -c .eslintrc.js **/*.js **/*.ts
 
     - name: Validate Shell Scripts
       run: |
