@@ -59,13 +59,12 @@ jobs:
 
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
-      if: ${{ env.ACT != 'true' }}  # Ensure this step does not run when running with 'act'
+      if: ${{ env.GITHUB_ACTIONS != 'true' }}
       run: |
         curl -fsSL https://github.com/nektos/act/releases/latest/download/act_Linux_x86_64.tar.gz | tar -xzvf -
         sudo mv act /usr/local/bin/
-        # List workflows
-        act -l
-        # Run only the 'Validate All Files' workflow to avoid Azure login steps in other workflows
+        act -l  # List workflows
+        # Run specific workflows or jobs as needed
         act -j validate -P ubuntu-latest=catthehacker/ubuntu:act-latest
 
     - name: Validate Terraform Files
