@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
+    "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
