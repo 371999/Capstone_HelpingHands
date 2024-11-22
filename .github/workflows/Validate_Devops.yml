@@ -88,25 +88,13 @@ jobs:
       with:
         node-version: '20'
 
-    # Install and Lint Backend Files
-    - name: Install Backend Dependencies
-      working-directory: backend
-      run: npm install  # Use 'npm ci' for clean install based on package-lock.json
+    - name: Install Project Dependencies
+      run: npm ci
 
-    - name: Lint Backend JavaScript/TypeScript Files
-      working-directory: backend
+    - name: Lint Frontend and Backend JavaScript/TypeScript Files
       run: |
-        npx eslint **/*.js **/*.ts
-
-    # Install and Lint Frontend Files
-    - name: Install Frontend Dependencies
-      working-directory: frontend
-      run: pnpm install
-
-    - name: Lint Frontend JavaScript/TypeScript Files
-      working-directory: frontend
-      run: |
-        npx eslint **/*.js **/*.ts 
+        npx eslint frontend/**/*.js frontend/**/*.ts
+        npx eslint backend/**/*.js backend/**/*.ts
 
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
