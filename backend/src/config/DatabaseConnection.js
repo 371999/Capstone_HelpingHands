@@ -10,15 +10,6 @@ const DatabaseConnection = async () => {
     }
 };
 
-const disconnect = async () => {
-    try {
-        await mongoose.disconnect();
-        console.log(`Database connection closed successfully`);
-    } catch (e) {
-        console.error(`Error closing database connection: ${e.message}`);
-    }
-};
-
 module.exports = {
     connect: DatabaseConnection,
     disconnect,
