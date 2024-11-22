@@ -9,6 +9,7 @@
     "build": "tsc",
     "lint": "eslint . --ext .ts", 
     "test": "jest"
+    "lint": "npx eslint . --ext .js,.ts"
   },
   "keywords": [],
   "author": "",
