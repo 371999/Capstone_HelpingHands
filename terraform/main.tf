@@ -40,6 +40,7 @@ resource "azurerm_public_ip" "frontend_backend_pip" {
   resource_group_name = azurerm_resource_group.frontend_backend_rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
+  domain_name_label   = "helpinghands"
 }
 
 # Creating Network Security Group (NSG)
@@ -83,30 +84,6 @@ resource "azurerm_network_security_group" "frontend_backend_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
-  security_rule {
-    name                       = "Allow-NodePort-Range-Inbound"
-    priority                   = 1003
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "30000-32767"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Allow-NodePort-Range-Outbound"
-    priority                   = 1004
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "30000-32767"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
 }
 
 # Associating NSG with NIC
@@ -121,9 +98,8 @@ resource "azurerm_linux_virtual_machine" "frontend_backend_vm" {
   location              = azurerm_resource_group.frontend_backend_rg.location
   resource_group_name   = azurerm_resource_group.frontend_backend_rg.name
   network_interface_ids = [azurerm_network_interface.frontend_backend_nic.id]
-  size                  = "Standard_D2s_v3"
+  size                  = "Standard_B2s"
   admin_username        = "azureuser"
-  
 
   admin_ssh_key {
     username   = "azureuser"
