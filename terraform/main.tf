@@ -3,7 +3,7 @@ resource "azurerm_resource_group" "frontend_backend_rg" {
   name     = "frontend-backend-rg"
   location = "East US"
 }
-  
+   
 # Defining and setting a virtual network with subnet
 resource "azurerm_virtual_network" "frontend_backend_vnet" {
   name                = "frontend-backend-vnet"
