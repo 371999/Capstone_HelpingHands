@@ -59,8 +59,8 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.5.0",
-    "eslint-config-prettier": "^9.0.0",  // Optional for integrating Prettier
-    "eslint-plugin-jsx-a11y": "^6.7.1",   // For accessibility checks
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
