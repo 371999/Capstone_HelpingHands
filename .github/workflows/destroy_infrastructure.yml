@@ -2,12 +2,12 @@ name: Terraform Destroy for Azure
 
 on:
   push: 
-    branches:  
+    branches:
+      - main
       - shreyas    
     paths:
       - '**/destroy_infrastructure.yml' 
   workflow_dispatch:
-    description: "Trigger workflow to destroy Azure environment with Terraform"
 
 # Special permissions required for OIDC authentication
 permissions:
