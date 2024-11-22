@@ -44,6 +44,7 @@ jobs:
       run: |
         yamllint k8s/*.yaml
         kubeval k8s/*.yaml
+        kubeval --ignore-missing-schemas k8s/*.yaml
 
     - name: Check Kubernetes Best Practices
       run: |
