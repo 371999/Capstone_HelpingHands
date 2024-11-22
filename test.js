@@ -1,13 +1,19 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
+require('dotenv').config({ path: './.env' });
 
-// Import your models
+// Debug loaded environment variables
+console.log('Loaded TEST_DB_URI:', process.env.TEST_DB_URI);
+
+if (!process.env.TEST_DB_URI) {
+    throw new Error('TEST_DB_URI is not defined. Please check your .env file.');
+}
+
+// Import models
 const Profile = require('./models/Profile');
 const Item = require('./models/Item');
 const Request = require('./models/Request');
 
 beforeAll(async () => {
-    // Connect to the test database
     await mongoose.connect(process.env.TEST_DB_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -15,15 +21,17 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    // Clean up database and close connection
-    await mongoose.connection.db.dropDatabase();
-    await mongoose.disconnect();
+    if (mongoose.connection.readyState) {
+        await mongoose.connection.db.dropDatabase();
+        await mongoose.disconnect();
+    }
 });
 
 describe('Database Tests for HelpingHands', () => {
     beforeEach(async () => {
-        // Clean up before each test to avoid conflicts
-        await mongoose.connection.db.dropDatabase();
+        if (mongoose.connection.readyState) {
+            await mongoose.connection.db.dropDatabase();
+        }
     });
 
     /**
@@ -37,7 +45,7 @@ describe('Database Tests for HelpingHands', () => {
                 lastName: 'Doe',
                 gymName: 'Helping Gym',
                 password: 'hashedpassword123',
-                type: 'regular', // Required field added
+                type: 'regular',
             };
 
             const profile = new Profile(profileData);
