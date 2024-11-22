@@ -72,6 +72,7 @@ jobs:
       working-directory: terraform
       run: |
         echo 'variable "private_key" { default = "dummy_private_key_for_validation" }' > vm_variables.tf
+        echo 'variable "public_key" { default = "dummy_private_key_for_validation" }' > vm_variables.tf
         
     - name: Validate Terraform Files
       working-directory: terraform
