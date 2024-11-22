@@ -9,10 +9,11 @@ on:
       - 'backend/**'
   workflow_dispatch:
     description: "Manually trigger the combined CI/CD pipeline"
-
-permissions:
-  id-token: write
-  contents: read
+  workflow_run:
+    workflows:
+      - Validate All Files
+    types:
+      - completed
 
 env:
   ARM_USE_OIDC: "true"
