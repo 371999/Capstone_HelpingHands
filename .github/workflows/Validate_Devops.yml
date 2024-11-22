@@ -2,6 +2,9 @@ name: Validate All Files
 
 on:
   push:
+    branches:
+      - main
+      - shreyas
     paths:
       - '**/*.yaml'
       - '**/Dockerfile'
