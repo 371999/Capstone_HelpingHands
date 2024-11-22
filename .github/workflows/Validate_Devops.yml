@@ -71,9 +71,12 @@ jobs:
     - name: Validate Terraform Files
       working-directory: terraform
       run: |
+        set -e
         terraform init -backend=false
         terraform fmt -check -recursive
-        terraform validate -var="private_key=dummy_private_key_for_validation" -var="public_key=dummy_public_key_for_validation"
+        terraform validate -var="private_key=dummy_private_key" -var="public_key=dummy_public_key"
+      shell: bash
+
 
     - name: Set Terraform Variables for Validation
       working-directory: terraform
