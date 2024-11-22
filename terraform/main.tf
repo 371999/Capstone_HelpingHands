@@ -163,8 +163,8 @@ resource "azurerm_dns_zone" "helpinghands_org" {
   resource_group_name = azurerm_resource_group.frontend_backend_rg.name
 }
 
-resource "azurerm_dns_cname_record" "www" {
-  name                = "www"
+resource "azurerm_dns_cname_record" "shreyas" {
+  name                = "shreyas"
   zone_name           = azurerm_dns_zone.helpinghands_org.name
   resource_group_name = azurerm_resource_group.frontend_backend_rg.name
   ttl                 = 300
