@@ -157,18 +157,3 @@ resource "azurerm_container_registry" "frontend_backend_acr" {
     environment = "development"
   }
 }
-
-resource "azurerm_dns_zone" "helpinghands_org" {
-  name                = "helpinghands.org"
-  resource_group_name = azurerm_resource_group.frontend_backend_rg.name
-}
-
-resource "azurerm_dns_cname_record" "shreyas" {
-  name                = "shreyas"
-  zone_name           = azurerm_dns_zone.helpinghands_org.name
-  resource_group_name = azurerm_resource_group.frontend_backend_rg.name
-  ttl                 = 300
-  record              = azurerm_public_ip.frontend_backend_pip.fqdn
-
-  depends_on = [azurerm_dns_zone.helpinghands_org, azurerm_public_ip.frontend_backend_pip]
-}
