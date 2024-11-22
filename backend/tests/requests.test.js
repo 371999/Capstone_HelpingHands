@@ -1,19 +1,24 @@
 const request = require('supertest');
 const app = require('../src/index');
-const Request = require('../src/models/Request');
-const Item = require('../src/models/Item');
+const db = require('../src/config/DatabaseConnection'); // Updated DatabaseConnection
 
 jest.mock('../src/models/Request');
 jest.mock('../src/models/Item');
 
-let server; // Store server instance
+let server; // Store the server instance
 
-beforeAll(() => {
-    server = app.listen(4000); // Start the server on a specific port for testing
+beforeAll(async () => {
+    // Start the server on a specific port for testing
+    server = app.listen(4000, () => console.log(`Test server running on port 4000`));
+
+    // Connect to the database
+    await db.connect();
 });
 
-afterAll(() => {
-    server.close(); // Close the server after all tests
+afterAll(async () => {
+    // Close the server and database connection after all tests
+    server.close();
+    await db.disconnect();
 });
 
 describe('RequestController - Create Request', () => {
