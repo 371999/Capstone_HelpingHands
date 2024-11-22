@@ -24,8 +24,7 @@ spec:
         - name: acr-secret  # ACR secret reference
       containers:
         - name: backend
-          image: <ACR_LOGIN_SERVER>/backend:latest  
-          # Replace with actual ACR server
+          image: <ACR_LOGIN_SERVER>/backend:latest  # Replace with actual ACR server
           ports:
             - containerPort: 8080
           env:
@@ -36,6 +35,6 @@ spec:
             - name: JWT_SECRET
               value: "<JWT_SECRET>"  # Replace with JWT secret
             - name: FRONTEND_URL
-              value: "http://<VM_PUBLIC_IP>:30030"  
-              # Replace with VM public IP
+              value: >
+                http://<VM_PUBLIC_IP>:30030  # Replace with actual VM public IP
           imagePullPolicy: Always
