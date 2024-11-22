@@ -157,9 +157,3 @@ resource "azurerm_container_registry" "frontend_backend_acr" {
     environment = "development"
   }
 }
-
-# DNS Zone and CNAME Record
-resource "azurerm_dns_zone" "helpinghands_org" {
-  name                = "helpinghands.org"
-  resource_group_name = azurerm_resource_group.frontend_backend_rg.name
-}
