@@ -51,7 +51,8 @@ jobs:
 
     - name: Test Workflows Locally
       run: |
-        curl -fsSL https://github.com/nektos/act/releases/latest/download/act-linux-amd64.tar.gz | tar -xzvf -
+        curl -fsSL https://github.com/nektos/act/releases/latest/download/act-linux-amd64 -o act
+        chmod +x act
         sudo mv act /usr/local/bin/
         act -l  # List workflows
         act      # Run workflows
