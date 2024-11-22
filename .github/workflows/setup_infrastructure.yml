@@ -1,5 +1,5 @@
 name: Terraform Setup for Azure
-  
+   
 on:    
   push:            
     branches:         
