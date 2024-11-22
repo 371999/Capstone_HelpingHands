@@ -83,23 +83,25 @@ jobs:
         terraform fmt -check -recursive
         terraform validate
 
+    # Install and Lint Backend Files
     - name: Install Backend Dependencies
       working-directory: backend
-      run: npm install
+      run: npm ci  # Use 'npm ci' for clean install based on package-lock.json
 
     - name: Lint Backend JavaScript/TypeScript Files
       working-directory: backend
       run: |
-        eslint -c .eslintrc.js **/*.js **/*.ts
+        npx eslint **/*.js **/*.ts
 
+    # Install and Lint Frontend Files
     - name: Install Frontend Dependencies
       working-directory: frontend
-      run: npm install
+      run: npm ci
 
     - name: Lint Frontend JavaScript/TypeScript Files
       working-directory: frontend
       run: |
-        eslint -c .eslintrc.js **/*.js **/*.ts
+        npx eslint **/*.js **/*.ts
 
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
