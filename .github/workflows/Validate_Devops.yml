@@ -101,7 +101,7 @@ jobs:
     - name: Lint Frontend JavaScript/TypeScript Files
       working-directory: frontend
       run: |
-        npx eslint **/*.js **/*.ts
+        npx eslint **/*.js **/*.ts 
 
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
