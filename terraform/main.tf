@@ -40,6 +40,9 @@ resource "azurerm_public_ip" "frontend_backend_pip" {
   resource_group_name = azurerm_resource_group.frontend_backend_rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
+  dns_settings {
+    domain_name_label = "helpinghands"
+  }
 }
 
 # Creating Network Security Group (NSG)
@@ -123,6 +126,7 @@ resource "azurerm_linux_virtual_machine" "frontend_backend_vm" {
   network_interface_ids = [azurerm_network_interface.frontend_backend_nic.id]
   size                  = "Standard_D2s_v3"
   admin_username        = "azureuser"
+  
 
   admin_ssh_key {
     username   = "azureuser"
@@ -178,17 +182,6 @@ resource "azurerm_container_registry" "frontend_backend_acr" {
 
   tags = {
     environment = "development"
-  }
-}
-
-resource "azurerm_public_ip" "frontend_backend_pip" {
-  name                = "frontend-backend-pip"
-  location            = azurerm_resource_group.frontend_backend_rg.location
-  resource_group_name = azurerm_resource_group.frontend_backend_rg.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-  dns_settings {
-    domain_name_label = "helpinghands"
   }
 }
 
