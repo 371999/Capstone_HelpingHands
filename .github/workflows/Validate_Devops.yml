@@ -86,12 +86,12 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18'
+        node-version: '20'
 
     # Install and Lint Backend Files
     - name: Install Backend Dependencies
       working-directory: backend
-      run: npm ci  # Use 'npm ci' for clean install based on package-lock.json
+      run: npm install  # Use 'npm ci' for clean install based on package-lock.json
 
     - name: Lint Backend JavaScript/TypeScript Files
       working-directory: backend
@@ -101,7 +101,7 @@ jobs:
     # Install and Lint Frontend Files
     - name: Install Frontend Dependencies
       working-directory: frontend
-      run: npm ci
+      run: pnpm install
 
     - name: Lint Frontend JavaScript/TypeScript Files
       working-directory: frontend
