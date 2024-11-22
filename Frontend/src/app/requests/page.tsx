@@ -29,7 +29,9 @@ export default function Component() {
   const router = useRouter();
   const user = getProfileData();
   const [feedback, setFeedback] = useState("");
+  const [updatedFeedback, setUpdatedFeedback] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddCommentDialogOpen, setIsAddCommentDialogOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   useEffect(() => {
     console.log("userData", user);
@@ -95,6 +97,36 @@ export default function Component() {
     }
   };
 
+  const handleNewFeedbackSubmit = async () => {
+    if (!selectedBooking) return;
+
+    try {
+      const response = await httpFetch(
+        CREATE_REQUEST + `/${selectedBooking._id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            comments: `${selectedBooking.comments}\n\n${updatedFeedback}`,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setIsAddCommentDialogOpen(false);
+        setFeedback("");
+        giveReviewToast("success", "The review submitted successfully!");
+      } else {
+        giveReviewToast("destructive", "Failed to submit review!");
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      giveReviewToast("destructive", "Failed to submit review!");
+    }
+  };
+
   const giveReviewToast = (variant: string, description: string) => {
     toast({
       variant: variant,
@@ -106,6 +138,11 @@ export default function Component() {
   const handleRate = (booking: Booking) => {
     setSelectedBooking(booking);
     setIsDialogOpen(true);
+  };
+
+  const handleUpdateComment = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsAddCommentDialogOpen(true);
   };
 
   return (
@@ -199,8 +236,15 @@ export default function Component() {
                           </p>
                         </div>
 
-                        <Button variant="outline" size="sm" disabled>
-                          Accepted
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          // onClick={() =>
+                          //   handleUpdate(booking._id, booking.gym._id)
+                          // }
+                          onClick={() => handleUpdateComment(booking)}
+                        >
+                          Add Comment
                         </Button>
                       </Card>
                     )
@@ -218,6 +262,19 @@ export default function Component() {
                 onChange={(e) => setFeedback(e.target.value)}
               />
               <Button onClick={handleFeedbackSubmit}>Accept Request</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={isAddCommentDialogOpen} onOpenChange={setIsAddCommentDialogOpen}>
+          <DialogContent>
+            <h2 className="text-xl font-bold mb-4">Add New Comment</h2>
+            <div className="space-y-4">
+              <Input
+                id="add_comment"
+                value={updatedFeedback}
+                onChange={(e) => setUpdatedFeedback(e.target.value)}
+              />
+              <Button onClick={handleNewFeedbackSubmit}>Add Comment</Button>
             </div>
           </DialogContent>
         </Dialog>
