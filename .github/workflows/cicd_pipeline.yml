@@ -3,12 +3,12 @@ name: Combined CI/CD Pipeline
 on:
   push:
     branches:
+      - main
       - shreyas
     paths:
       - 'frontend/**'
       - 'backend/**'
-  workflow_dispatch:
-    description: "Manually trigger the combined CI/CD pipeline"
+  workflow_dispatch: 
   workflow_run:
     workflows:
       - Validate All Files
