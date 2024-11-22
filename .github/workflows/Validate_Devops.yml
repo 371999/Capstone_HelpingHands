@@ -39,6 +39,10 @@ jobs:
         chmod +x /usr/local/bin/hadolint
         curl -fsSL https://raw.githubusercontent.com/hashicorp/terraform-ls/main/install.sh | bash
         npm install -g eslint
+        # Install kube-score
+        curl -L https://github.com/zegl/kube-score/releases/latest/download/kube-score_1.19.0_linux_amd64.tar.gz | tar -xzvf -
+        sudo mv kube-score /usr/local/bin/
+
 
     - name: Validate Kubernetes YAML Files
       run: |
