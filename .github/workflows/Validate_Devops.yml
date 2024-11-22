@@ -40,7 +40,12 @@ jobs:
         chmod +x ./kind && sudo mv ./kind /usr/local/bin/
         curl -fsSL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint
         chmod +x /usr/local/bin/hadolint
-        curl -fsSL https://raw.githubusercontent.com/hashicorp/terraform-ls/main/install.sh | bash
+        # Install Terraform
+        sudo apt-get install -y gnupg software-properties-common curl
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update
+        sudo apt-get install -y terraform
         npm install -g eslint
 
     - name: Validate Kubernetes YAML Files
@@ -52,13 +57,15 @@ jobs:
       run: |
         hadolint backend/Dockerfile frontend/Dockerfile
 
+    # Conditional step to prevent running 'act' within 'act'
     - name: Test Workflows Locally
+      if: ${{ env.ACT != 'true' }}
       run: |
         curl -fsSL https://github.com/nektos/act/releases/latest/download/act_Linux_x86_64.tar.gz | tar -xzvf -
         sudo mv act /usr/local/bin/
         act -l  # List workflows
-        act  # Run act without specifying a custom image
-        
+        act -P ubuntu-latest=catthehacker/ubuntu:act-latest  # Specify image explicitly
+
     - name: Validate Terraform Files
       run: |
         terraform fmt -check -recursive
