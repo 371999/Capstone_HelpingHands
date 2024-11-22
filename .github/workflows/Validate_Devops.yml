@@ -83,6 +83,11 @@ jobs:
         terraform fmt -check -recursive
         terraform validate
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
     # Install and Lint Backend Files
     - name: Install Backend Dependencies
       working-directory: backend
