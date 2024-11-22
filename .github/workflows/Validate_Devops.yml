@@ -14,7 +14,7 @@ on:
       - 'terraform/**'
   pull_request:
     paths:
-      - '**/*.yaml'
+      - '**/*.yaml' 
       - '**/Dockerfile'
       - '**/*.js'
       - '**/*.ts'
