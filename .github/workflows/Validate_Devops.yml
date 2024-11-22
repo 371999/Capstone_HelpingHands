@@ -30,16 +30,14 @@ jobs:
     - name: Install Validation Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y yamllint shellcheck unzip
+        sudo apt-get install -y yamllint shellcheck
         curl -fsSL https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar -xzvf -
         sudo mv kubeval /usr/local/bin/
         curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64"
         chmod +x ./kind && sudo mv ./kind /usr/local/bin/
         curl -fsSL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint
         chmod +x /usr/local/bin/hadolint
-        curl -fsSL https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip -o terraform.zip
-        unzip terraform.zip
-        sudo mv terraform /usr/local/bin/
+        curl -fsSL https://raw.githubusercontent.com/hashicorp/terraform-ls/main/install.sh | bash
         npm install -g eslint
 
     - name: Validate Kubernetes YAML Files
@@ -58,6 +56,13 @@ jobs:
     - name: Validate CI/CD Workflow YAML Files
       run: |
         yamllint .github/workflows/*.yml
+
+    - name: Test Workflows Locally
+      run: |
+        curl -fsSL https://github.com/nektos/act/releases/latest/download/act-linux-amd64.tar.gz | tar -xzvf -
+        sudo mv act /usr/local/bin/
+        act -l  # List workflows
+        act      # Run workflows
 
     - name: Validate Terraform Files
       run: |
