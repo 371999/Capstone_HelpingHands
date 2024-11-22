@@ -68,20 +68,17 @@ jobs:
         mkdir -p ~/.terraform.d/plugin-cache
         echo "plugin_cache_dir = \"$HOME/.terraform.d/plugin-cache\"" > ~/.terraformrc
 
-    - name: Validate Terraform Files
-      working-directory: terraform
-      run: |
-        set -e
-        terraform init -backend=false
-        terraform fmt -check -recursive
-        terraform validate -var="private_key=dummy_private_key" -var="public_key=dummy_public_key"
-      shell: bash
-
-
     - name: Set Terraform Variables for Validation
       working-directory: terraform
       run: |
-        echo 'variable "private_key" { default = "dummy_private_key_for_validation" }' > vm_variables.tf
+        echo 'variable "private_key" { default = "dummy_private_key_for_validation" }' > validiation_variables.tf
+        
+    - name: Validate Terraform Files
+      working-directory: terraform
+      run: |
+        terraform init -backend=false
+        terraform fmt -check -recursive
+        terraform validate
         
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
