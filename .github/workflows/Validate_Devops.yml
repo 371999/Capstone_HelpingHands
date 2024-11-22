@@ -67,6 +67,18 @@ jobs:
       run: |
         mkdir -p ~/.terraform.d/plugin-cache
         echo "plugin_cache_dir = \"$HOME/.terraform.d/plugin-cache\"" > ~/.terraformrc
+
+    - name: Validate Terraform Files
+      working-directory: terraform
+      run: |
+        terraform init -backend=false
+        terraform fmt -check -recursive
+        terraform validate -var="private_key=dummy_private_key_for_validation" -var="public_key=dummy_public_key_for_validation"
+
+    - name: Set Terraform Variables for Validation
+      working-directory: terraform
+      run: |
+        echo 'variable "private_key" { default = "dummy_private_key_for_validation" }' > vm_variables.tf
         
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
@@ -77,13 +89,6 @@ jobs:
         act -l  # List workflows
         # Run specific workflows or jobs as needed
         act -j validate -P ubuntu-latest=catthehacker/ubuntu:act-latest
-
-    - name: Validate Terraform Files
-      working-directory: terraform
-      run: |
-        terraform init -backend=false
-        terraform fmt -check -recursive
-        terraform validate
 
     - name: Lint JavaScript/TypeScript Files
       run: |
