@@ -83,18 +83,31 @@ jobs:
         terraform fmt -check -recursive
         terraform validate
 
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20'
 
-    - name: Install Project Dependencies
+    - name: Install Backend Dependencies
+      working-directory: backend
       run: npm ci
 
-    - name: Lint Frontend and Backend JavaScript/TypeScript Files
+    - name: Lint Backend JavaScript/TypeScript Files
+      working-directory: backend
       run: |
-        npx eslint frontend/**/*.js frontend/**/*.ts
-        npx eslint backend/**/*.js backend/**/*.ts
+        npx eslint . --ext .js,.ts
+
+    - name: Install Frontend Dependencies
+      working-directory: frontend
+      run: npm ci
+    
+    - name: Lint Frontend JavaScript/TypeScript Files
+      working-directory: frontend
+      run: |
+        npx eslint **/*.js **/*.ts
 
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
