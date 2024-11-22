@@ -1,10 +1,3 @@
-/*
- * File: /analytics/[id]/page.tsx
- * Author: Raj Chauhan <rj513623@dal.ca>
- * Date: 2024-07-30
- * Description: Use for Gyms Owners to see analytics for their gym.
- */
-
 "use client";
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
