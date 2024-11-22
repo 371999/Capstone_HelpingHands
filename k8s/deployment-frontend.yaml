@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,8 +10,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1 # Number of additional pods that can be created during the update
-      maxUnavailable: 1 # Number of pods that can be unavailable during the update
+      maxSurge: 1  # Number of additional pods during the update
+      maxUnavailable: 1  # Number of pods that can be unavailable
   selector:
     matchLabels:
       app: frontend
@@ -20,15 +21,15 @@ spec:
         app: frontend
     spec:
       imagePullSecrets:
-      - name: acr-secret # Reference the Kubernetes secret for ACR authentication
+        - name: acr-secret  # ACR secret reference
       containers:
-      - name: frontend
-        image: <ACR_LOGIN_SERVER>/frontend:latest # Replace with actual ACR login server
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NEXT_PUBLIC_API_URL
-          value: "http://<VM_PUBLIC_IP>:30080" # Replace <VM_PUBLIC_IP> with the public IP of your VM
-        - name: NEXT_PUBLIC_AUTH_URL
-          value: "http://<VM_PUBLIC_IP>:30080" # Replace <VM_PUBLIC_IP> with the public IP of your VM
-        imagePullPolicy: Always
+        - name: frontend
+          image: <ACR_LOGIN_SERVER>/frontend:latest  # Replace with actual ACR server
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "http://<VM_PUBLIC_IP>:30080"  # Replace with public IP
+            - name: NEXT_PUBLIC_AUTH_URL
+              value: "http://<VM_PUBLIC_IP>:30080"  # Replace with public IP
+          imagePullPolicy: Always
