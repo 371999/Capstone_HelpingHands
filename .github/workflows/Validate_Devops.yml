@@ -1,0 +1,76 @@
+name: Validate All Files
+
+on:
+  push:
+    paths:
+      - '**/*.yaml'
+      - '**/Dockerfile'
+      - '**/*.js'
+      - '**/*.ts'
+      - '.github/workflows/*.yml'
+      - 'terraform/**'
+  pull_request:
+    paths:
+      - '**/*.yaml'
+      - '**/Dockerfile'
+      - '**/*.js'
+      - '**/*.ts'
+      - '.github/workflows/*.yml'
+      - 'terraform/**'
+
+jobs:
+  validate:
+    name: Validate All Configurations and Scripts
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install Validation Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y yamllint shellcheck unzip
+        curl -fsSL https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar -xzvf -
+        sudo mv kubeval /usr/local/bin/
+        curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64"
+        chmod +x ./kind && sudo mv ./kind /usr/local/bin/
+        curl -fsSL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint
+        chmod +x /usr/local/bin/hadolint
+        curl -fsSL https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip -o terraform.zip
+        unzip terraform.zip
+        sudo mv terraform /usr/local/bin/
+        npm install -g eslint
+
+    - name: Validate Kubernetes YAML Files
+      run: |
+        yamllint k8s/*.yaml
+        kubeval k8s/*.yaml
+
+    - name: Check Kubernetes Best Practices
+      run: |
+        kube-score score k8s/*.yaml
+
+    - name: Lint Dockerfiles
+      run: |
+        hadolint backend/Dockerfile frontend/Dockerfile
+
+    - name: Validate CI/CD Workflow YAML Files
+      run: |
+        yamllint .github/workflows/*.yml
+
+    - name: Validate Terraform Files
+      run: |
+        terraform fmt -check -recursive
+        terraform validate
+
+    - name: Lint JavaScript/TypeScript Files
+      run: |
+        eslint backend/**/*.js backend/**/*.ts frontend/**/*.js frontend/**/*.ts
+
+    - name: Validate Shell Scripts
+      run: |
+        find . -name "*.sh" -exec shellcheck {} \;
+
+    - name: Summary
+      run: echo "Validation Workflow Complete!"
