@@ -12,8 +12,3 @@ output "dns_zone_name" {
   value       = azurerm_dns_zone.helpinghands_org.name
   description = "The name of the DNS Zone."
 }
-
-output "cname_record_www" {
-  value       = azurerm_dns_cname_record.www.record
-  description = "The FQDN that 'www' subdomain points to."
-}
