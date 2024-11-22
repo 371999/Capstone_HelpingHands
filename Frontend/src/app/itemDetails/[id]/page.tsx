@@ -82,7 +82,7 @@ export default function Component() {
   const handleCreateRequest = async (requestType: string) => {
     try {
       setRequestProcessing(true);
-      if(messageToOwner === "" || messageToOwner === null){
+      if (messageToOwner === "" || messageToOwner === null) {
         giveReviewToast("destructive", "Please enter a message to the owner!");
         return;
       }
@@ -195,7 +195,18 @@ export default function Component() {
             userRequest.status === 1 ? (
               <>
                 <h4>Your Request has been accepted</h4>
-                <p><label><b><u>Owner's comment:</u></b></label> {userRequest.comments}</p>
+                <p>
+                  <label>
+                    <b>
+                      <u>Owner's comment:</u>
+                    </b>
+                  </label>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: userRequest.comments.replace(/\n/g, "<br>"),
+                    }}
+                  ></span>
+                </p>
               </>
             ) : userRequest && userRequest.userId === user.id ? (
               <Button
@@ -208,8 +219,11 @@ export default function Component() {
               </Button>
             ) : itemDetails.userId === user.id ? null : (
               <>
-               <div className="mt-4">
-                  <label htmlFor="messageToOwner" className="block text-sm font-medium text-gray-700">
+                <div className="mt-4">
+                  <label
+                    htmlFor="messageToOwner"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Message to Owner
                   </label>
                   <textarea
