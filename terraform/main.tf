@@ -126,7 +126,7 @@ resource "azurerm_linux_virtual_machine" "frontend_backend_vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = var.public_key
+    public_key = fileexists("~/.ssh/id_rsa.pub") ? file("~/.ssh/id_rsa.pub") : var.public_key
   }
 
   disable_password_authentication = true
@@ -162,7 +162,7 @@ resource "azurerm_linux_virtual_machine" "frontend_backend_vm" {
     connection {
       type        = "ssh"
       user        = "azureuser"
-      private_key = file("~/.ssh/id_rsa")
+      private_key = fileexists("~/.ssh/id_rsa") ? file("~/.ssh/id_rsa") : var.private_key
       host        = azurerm_public_ip.frontend_backend_pip.ip_address
     }
   }
