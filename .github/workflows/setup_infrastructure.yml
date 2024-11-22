@@ -1,7 +1,7 @@
 name: Terraform Setup for Azure
 
 on:   
-  push:          
+  push:           
     branches:
       - main         
       - shreyas  
