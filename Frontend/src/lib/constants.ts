@@ -18,14 +18,14 @@ export const INITIAL_LINKS: Array<LinkType> = [
   },
 ];
 
-export const GYMOWNER_LINKS: Array<LinkType> = [
+export const ADMIN_LINKS: Array<LinkType> = [
   {
-    name: "Add Item",
-    ref: "/item",
+    name: "Manage Items",
+    ref: "/adminItemView",
   },
   {
-    name: "Your Items",
-    ref: "/itemDashboard",
+    name: "Manager Users",
+    ref: "/adminUserView",
   },
 ];
 
