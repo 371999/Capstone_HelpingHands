@@ -57,7 +57,7 @@ jobs:
         curl -fsSL https://github.com/nektos/act/releases/latest/download/act_Linux_x86_64.tar.gz | tar -xzvf -
         sudo mv act /usr/local/bin/
         act -l  # List workflows
-        act      # Run workflows
+        act --default-workflow-runner medium
 
     - name: Validate Terraform Files
       run: |
