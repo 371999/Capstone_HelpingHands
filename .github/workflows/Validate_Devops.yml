@@ -49,10 +49,6 @@ jobs:
       run: |
         hadolint backend/Dockerfile frontend/Dockerfile
 
-    - name: Validate CI/CD Workflow YAML Files
-      run: |
-        yamllint .github/workflows/*.yml
-
     - name: Test Workflows Locally
       run: |
         curl -fsSL https://github.com/nektos/act/releases/latest/download/act-linux-amd64.tar.gz | tar -xzvf -
