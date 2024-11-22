@@ -57,6 +57,17 @@ jobs:
       run: |
         hadolint backend/Dockerfile frontend/Dockerfile
 
+    - name: Cache Terraform Providers
+      uses: actions/cache@v3
+      with:
+        path: ~/.terraform.d/plugin-cache
+        key: ${{ runner.os }}-terraform-plugin-cache
+
+    - name: Set Terraform Plugin Cache Directory
+      run: |
+        mkdir -p ~/.terraform.d/plugin-cache
+        echo "plugin_cache_dir = \"$HOME/.terraform.d/plugin-cache\"" > ~/.terraformrc
+        
     # Adjusted step to prevent Azure login failure during 'act' execution
     - name: Test Workflows Locally
       if: ${{ env.GITHUB_ACTIONS != 'true' }}
@@ -70,6 +81,7 @@ jobs:
     - name: Validate Terraform Files
       working-directory: terraform
       run: |
+        terraform init -backend=false
         terraform fmt -check -recursive
         terraform validate
 
