@@ -9,6 +9,12 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import {
+  GoogleMap,
+  LoadScript,
+  Marker,
+  Autocomplete,
+} from "@react-google-maps/api";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,6 +41,18 @@ interface LoggedInUser {
   id?: string;
 }
 
+
+
+const containerStyle = {
+  width: "100%",
+  height: "400px",
+};
+
+const center = {
+  lat: 37.7749, // Default latitude
+  lng: -122.4194, // Default longitude
+};
+
 export default function EditGymPage() {
   const router = useRouter();
   const { id: gymId } = useParams();
@@ -60,8 +78,10 @@ export default function EditGymPage() {
     province: false,
     country: false,
   });
+  const [position, setPosition] = useState<{ lat: number; lng: number }>(center);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
-
+  const GOOGLE_MAPS_API_KEY = "AIzaSyCgh7PYa4V4rBylomneCDCmsvlp6SqwkK0";
   useEffect(() => {
     const loadProfileData = async () => {
       try {
@@ -109,7 +129,7 @@ export default function EditGymPage() {
 
   useEffect(() => {
     if (loggedInUser && recordUserId) {
-      setIsEditable(loggedInUser.id === recordUserId);
+      setIsEditable(loggedInUser.id === recordUserId || loggedInUser.type === "admin");
     }
   }, [loggedInUser, recordUserId]);
 
@@ -153,14 +173,15 @@ export default function EditGymPage() {
       city: !city,
       province: !province,
       country: !country,
-      price: price === undefined || isNaN(price) || price <= 0,
     };
     setErrors(newErrors);
     return !Object.values(newErrors).includes(true);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    console.log("inside handle")
     e.preventDefault();
+
 
     if (!validateForm()) {
       return;
@@ -193,7 +214,12 @@ export default function EditGymPage() {
 
         setTimeout(() => {
           // @ts-ignore
-          router.push("/itemDashboard");
+          if(loggedInUser.type === "admin") {
+            router.push("/adminItemView");
+          }
+          else {
+            router.push("/itemDashboard");
+          }
         }, 2000);
       } else {
         toast.error("Error updating gym profile.");
@@ -220,6 +246,61 @@ export default function EditGymPage() {
       console.error("Error:", error);
       toast.error("Error deleting item.");
     }
+  };
+
+  const onMapClick = async (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setPosition({ lat, lng });
+
+      // Fetch address details
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+
+      if (data.results && data.results[0]) {
+        const addressComponents = data.results[0].address_components;
+
+        const getAddressComponent = (type: string) => {
+          const component = addressComponents.find((comp: any) =>
+            comp.types.includes(type)
+          );
+          return component ? component.long_name : "";
+        };
+
+        setStreet(getAddressComponent("route"));
+        setCity(getAddressComponent("locality"));
+        setProvince(getAddressComponent("administrative_area_level_1"));
+        setCountry(getAddressComponent("country"));
+      }
+    }
+  };
+
+  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        setPosition({ lat, lng });
+
+        const addressComponents = place.address_components;
+
+        const getAddressComponent = (type: string) => {
+          const component = addressComponents?.find((comp: any) =>
+            comp.types.includes(type)
+          );
+          return component ? component.long_name : "";
+        };
+
+        setStreet(getAddressComponent("route"));
+        setCity(getAddressComponent("locality"));
+        setProvince(getAddressComponent("administrative_area_level_1"));
+        setCountry(getAddressComponent("country"));
+      }
+    });
   };
 
   return (
@@ -322,6 +403,25 @@ export default function EditGymPage() {
                   <p className="text-red-500">Country is required.</p>
                 )}
               </div>
+              {/* Google Map */}
+          <div className="mt-4">
+            <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
+              <GoogleMap
+                mapContainerStyle={containerStyle}
+                center={position}
+                zoom={15}
+                onClick={onMapClick}
+                onLoad={() => setMapLoaded(true)}
+              >
+                <Marker position={position} />
+              </GoogleMap>
+              {mapLoaded && (
+                <Autocomplete onLoad={onAutocompleteLoad}>
+                  <Input placeholder="Search location..." className="mt-2" />
+                </Autocomplete>
+              )}
+            </LoadScript>
+          </div>
 
               {/* <div>
                                 <Label htmlFor="price">Price</Label>
