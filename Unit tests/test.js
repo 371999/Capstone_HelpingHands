@@ -3,7 +3,7 @@
 describe('userRegistration', () => {
 
     // Successfully registers a new user with valid data
-    it('should register a new user and return a JWT when provided with valid data', async () => {
+    it('register a new user and return a JWT when provided with valid data', async () => {
         const request = {
             body: {
                 email: 'test@example.com',
