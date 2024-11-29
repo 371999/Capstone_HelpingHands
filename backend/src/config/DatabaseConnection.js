@@ -2,6 +2,12 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 
 const DatabaseConnection = async () => {
+    // Skip database connection if in test environment
+    if (process.env.NODE_ENV === 'test') {
+        console.log('Skipping database connection in test environment');
+        return;
+    }
+
     try {
         if (!process.env.MONGODB_URI) {
             throw new Error('MONGODB_URI environment variable is not set.');
