@@ -1,29 +1,37 @@
 "use client";
 import {jwtDecode} from "jwt-decode";
-export function setAccessToken(accessToken: string) {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', accessToken);
-    }
-}
 
-export function getAccessToken() {
-    if (typeof window !== 'undefined') {
-        return localStorage.getItem('accessToken');
+class TokenManager {
+    private static isClientSide(): boolean {
+        return typeof window !== 'undefined';
     }
-}
 
-export function getProfileData() {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            return jwtDecode(token);
+    static setAccessToken(accessToken: string): void {
+        if (this.isClientSide()) {
+            localStorage.setItem('accessToken', accessToken);
         }
     }
-    return null;
-}
 
-export function removeAccessToken() {
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
+    static getAccessToken(): string | null {
+        if (this.isClientSide()) {
+            return localStorage.getItem('accessToken');
+        }
+        return null;
+    }
+
+    static getProfileData(): any {
+        if (this.isClientSide()) {
+            const token = localStorage.getItem('accessToken');
+            return token ? jwtDecode(token) : null;
+        }
+        return null;
+    }
+
+    static removeAccessToken(): void {
+        if (this.isClientSide()) {
+            localStorage.removeItem('accessToken');
+        }
     }
 }
+
+export default TokenManager;
