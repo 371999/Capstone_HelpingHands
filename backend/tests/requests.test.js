@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../src/app'); // Import app directly
+const app = require('../src/index'); // Import app directly
 
 const Request = require('../src/models/Request');
 const Item = require('../src/models/Item');
