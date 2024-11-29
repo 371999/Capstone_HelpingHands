@@ -12,18 +12,6 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-// Connect to the database
-(async () => {
-    try {
-        await DatabaseConnection();
-    } catch (error) {
-        console.error(`Database Connection Error: ${error.message}`);
-        if (process.env.NODE_ENV !== 'test') {
-            process.exit(1); // Only exit in non-test environments
-        }
-    }
-})();
-
 // Routes
 const authRoute = require('./routes/AuthRoute');
 const profileRoute = require('./routes/ProfileRoute');
