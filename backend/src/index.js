@@ -33,8 +33,9 @@ app.use('/profile', profileRoute);
 app.use('/item', itemRoute);
 app.use('/request', requestRoute);
 
-app.get('/', (req, res) => {
-    res.send(Constants.BASEROUTEMSG);
+// Start the server
+app.listen(SERVERPORT, () => {
+    console.log(`Server is running successfully on port ${SERVERPORT}`);
 });
 
 module.exports = app; // Export the app for use in `server.js` and testing
