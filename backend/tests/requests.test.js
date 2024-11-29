@@ -1,5 +1,6 @@
 const request = require('supertest');
-const app = require('../src/index'); // Ensure this exports only `app`, not the running server
+const app = require('../src/app'); // Import app directly
+
 const Request = require('../src/models/Request');
 const Item = require('../src/models/Item');
 
@@ -9,8 +10,7 @@ jest.mock('../src/models/Item');
 
 describe('RequestController - Create Request', () => {
     beforeEach(() => {
-        // Clear mock calls and implementations before each test
-        jest.clearAllMocks();
+        jest.clearAllMocks(); // Clear mock calls and implementations before each test
     });
 
     it('should return 400 if required fields are missing', async () => {
@@ -19,7 +19,7 @@ describe('RequestController - Create Request', () => {
             userId: 'user123',
         };
 
-        const res = await request(app)
+        const res = await request(app) // No server listening, just the app instance
             .post('/request')
             .send(mockRequest);
 
