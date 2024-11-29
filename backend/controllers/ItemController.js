@@ -1,4 +1,5 @@
 const Item = require('../models/Item');
+const Request = require('../models/Request');
 const Constants = require('../utils/Constants');
 
 exports.createItem = async (request, response) => {
@@ -13,6 +14,9 @@ exports.createItem = async (request, response) => {
             type,
             address: {
                 street: address?.street || '',
+                city: address?.city || '',
+                province: address?.province || '',
+                country: address?.country || ''
             },
             images,
             status
@@ -47,6 +51,9 @@ exports.updateItemById = async (request, response) => {
 
         if (address) {
             item.address.street = address.street || item.address.street;
+            item.address.city = address.city || item.address.city;
+            item.address.province = address.province || item.address.province;
+            item.address.country = address.country || item.address.country;
         }
 
         await item.save();
@@ -87,9 +94,9 @@ exports.getItemById = async (request, response) => {
         }
 
         // Check if the item is active (status = 1)
-        if (item.status !== 1) {
-            return response.status(Constants.FORBIDDEN).json({ message: 'Item is not active' });
-        }
+        // if (item.status !== 1) {
+        //     return response.status(Constants.FORBIDDEN).json({ message: 'Item is not active' });
+        // }
 
         response.json({ item });
     } catch (error) {
@@ -100,29 +107,35 @@ exports.getItemById = async (request, response) => {
 
 
 exports.getItems = async (request, response) => {
-    const { status, type, userId } = request.query; // Get type from query parameters
+    const { status, type, userId } = request.query;
 
     try {
-        const filter = { }; // Ensure only active items are retrieved
-        if (status) {
-            filter.status = status; // Add status filter if provided
+        // Base filter for the items
+        const itemFilter = {};
+        if (status) itemFilter.status = status;
+        if (type) itemFilter.type = type;
+
+        // If userId is provided, find items linked to requests with that userId
+        let items;
+        if (userId) {
+            // Get request records with the specified userId
+            const requests = await Request.find({ userId }).select('itemId');
+            const itemIds = requests.map(req => req.itemId);
+
+            // Add itemId filter based on matched requests
+            itemFilter._id = { $in: itemIds };
         }
-        
-        if (type) {
-            filter.type = type; // Add type filter if provided
-        }
-        if(userId) {
-            filter.userId = userId;
-        }
-        console.log("filter", filter);
-        const items = await Item.find(filter).sort({ createdAt: -1 });
-        console.log("items", items);
+
+        // Fetch items with the constructed filter
+        items = await Item.find(itemFilter).sort({ createdAt: -1 });
+
         response.json({ items });
     } catch (error) {
         console.log(error.message);
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
+
 exports.getOwnerItems = async (request, response) => {
     const userId = request.params.userId;
     console.log("userId", userId);
@@ -150,6 +163,7 @@ exports.getOwnerItems = async (request, response) => {
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
+
 exports.getItemsByUpdatedDate = async (request, response) => {
     try {
         console.log("this is the method");
