@@ -153,6 +153,11 @@ const Dashboard = () => {
                       >
                         Delete
                       </Button>
+                      <Button
+                        variant="outline"
+                      >
+                        <Link href={`/items/${item._id}`}>Edit</Link>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -192,4 +197,4 @@ const Dashboard = () => {
   );
 };
 
-export default dashboard;
+export default Dashboard;
