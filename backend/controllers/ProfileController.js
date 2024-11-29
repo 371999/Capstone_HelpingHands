@@ -76,3 +76,15 @@ exports.getAllUsersByFirstName = async (request, response) => {
         response.status(Constants.INTERNALERRORSTATUS).send('Server error');
     }
 };
+
+exports.getUsersByUpdatedDate = async (request, response) => {
+    try {
+        // Fetch profiles sorted by updatedAt in ascending order
+        const profiles = await Profile.find({ type: { $ne: 'admin' } }).sort({ updatedAt: 1 });
+        console.log("profiles", profiles);
+        response.json({ profiles: profiles });
+    } catch (error) {
+        console.log(error.message);
+        response.status(Constants.INTERNALERRORSTATUS).send('Server error');
+    }
+};
