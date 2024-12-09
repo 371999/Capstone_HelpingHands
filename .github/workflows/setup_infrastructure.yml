@@ -3,7 +3,7 @@ name: Terraform Setup for Azure
 on:    
   push:            
     branches:         
-      - shreyas
+      - Production
     paths: 
       - '**/setup_infrastructure.yml' 
   workflow_dispatch: 
