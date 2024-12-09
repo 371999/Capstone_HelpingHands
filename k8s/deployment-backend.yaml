@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1  # Number of additional pods during the update
+      maxUnavailable: 1  # Number of pods that can be unavailable
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      imagePullSecrets:
+        - name: acr-secret  # ACR secret reference
+      containers:
+        - name: backend
+          image: <ACR_LOGIN_SERVER>/backend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: MONGODB_URI
+              value: "<MONGODB_URI>"  # Replace with MongoDB URI
+            - name: JWT_SECRET
+              value: "<JWT_SECRET>"  # Replace with JWT secret
+            - name: FRONTEND_URL
+              value: "http://<VM_PUBLIC_IP>:30030"
+          imagePullPolicy: Always

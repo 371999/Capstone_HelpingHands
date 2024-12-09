@@ -1,0 +1,101 @@
+name: Validate All Files
+
+on:
+  push:
+    branches: 
+      - Production
+    paths:
+      - '**/*.yaml'
+      - '**/Dockerfile'
+      - 'terraform/**'
+  pull_request:
+    paths:
+      - '**/*.yaml' 
+      - '**/Dockerfile'
+      - 'terraform/**'
+
+jobs:
+  validate:
+    name: Validate All Configurations and Scripts
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install Validation Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y yamllint shellcheck
+        curl -fsSL https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar -xzvf -
+        sudo mv kubeval /usr/local/bin/
+        curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64"
+        chmod +x ./kind && sudo mv ./kind /usr/local/bin/
+        curl -fsSL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint
+        chmod +x /usr/local/bin/hadolint
+        # Install Terraform
+        sudo apt-get install -y gnupg software-properties-common curl
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository -y "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update
+        sudo apt-get install -y terraform
+        npm install -g eslint@8.50.0  # Install ESLint version 8.x to avoid config issues
+
+    - name: Validate Kubernetes YAML Files
+      run: |
+        yamllint k8s/*.yaml
+        kubeval --ignore-missing-schemas k8s/*.yaml
+
+    - name: Lint Dockerfiles
+      run: |
+        hadolint backend/Dockerfile frontend/Dockerfile
+
+    - name: Cache Terraform Providers
+      uses: actions/cache@v3
+      with:
+        path: ~/.terraform.d/plugin-cache
+        key: ${{ runner.os }}-terraform-plugin-cache
+
+    - name: Set Terraform Plugin Cache Directory
+      run: |
+        mkdir -p ~/.terraform.d/plugin-cache
+        echo "plugin_cache_dir = \"$HOME/.terraform.d/plugin-cache\"" > ~/.terraformrc
+
+    - name: Set Up SSH Keys
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
+        
+    - name: Validate Terraform Files
+      working-directory: terraform
+      run: |
+        terraform init -backend=false
+        terraform fmt -check -recursive
+        terraform validate
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Adjusted step to prevent Azure login failure during 'act' execution
+    - name: Test Workflows Locally
+      if: ${{ env.GITHUB_ACTIONS != 'true' }}
+      run: |
+        curl -fsSL https://github.com/nektos/act/releases/latest/download/act_Linux_x86_64.tar.gz | tar -xzvf -
+        sudo mv act /usr/local/bin/
+        act -l  # List workflows
+        # Run specific workflows or jobs as needed
+        act -j validate -P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+    - name: Validate Shell Scripts
+      run: |
+        find . -name "*.sh" -exec shellcheck {} \;
+
+    - name: Summary
+      run: echo "Validation Workflow Complete!"
+
+    - name: Clear Terraform Plugin Cache
+      run: rm -rf ~/.terraform.d/plugin-cache
+

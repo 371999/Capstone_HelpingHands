@@ -1,0 +1,35 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: frontend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1  # Number of additional pods during the update
+      maxUnavailable: 1  # Number of pods that can be unavailable
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      imagePullSecrets:
+        - name: acr-secret  # ACR secret reference
+      containers:
+        - name: frontend
+          image: <ACR_LOGIN_SERVER>/frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "http://<VM_PUBLIC_IP>:30080"
+            - name: NEXT_PUBLIC_AUTH_URL
+              value: "http://<VM_PUBLIC_IP>:30080"
+          imagePullPolicy: Always
