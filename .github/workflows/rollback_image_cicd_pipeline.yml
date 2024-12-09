@@ -3,8 +3,7 @@ name: Rollback CI/CD Pipeline
 on:
   push:
     branches:
-      - main
-      - shreyas
+      - Production
     paths:
       - '**/rollback_image_cicd_pipeline.yml'
   workflow_run:
