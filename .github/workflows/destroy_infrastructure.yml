@@ -3,8 +3,7 @@ name: Terraform Destroy for Azure
 on:
   push: 
     branches:
-      - main
-      - shreyas    
+      - Production    
     paths:
       - '**/destroy_infrastructure.yml' 
   workflow_dispatch:
