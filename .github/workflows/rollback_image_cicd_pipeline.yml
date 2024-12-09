@@ -1,0 +1,116 @@
+name: Rollback CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - Production
+    paths:
+      - '**/rollback_image_cicd_pipeline.yml'
+  workflow_run:
+    workflows:
+      - Combined CI/CD Pipeline # Name of the workflow to monitor
+    types:
+      - completed # Trigger on completion of the Combined CI/CD Pipelinee
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  IMAGE_TAG: "v189" # Default tag for rollback (update as needed)
+
+jobs:
+  rollback:
+    name: Rollback Application
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' || github.event_name == 'push' }} # Trigger on failure of Combined CI/CD Pipeline or file change
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform
+
+    - name: Terraform Format
+      run: terraform fmt -check
+      working-directory: terraform
+
+    - name: Set Up SSH Keys
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
+
+    - name: Get ACR Credentials and VM Public IP
+      id: get-acr
+      run: |
+        echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+        echo "ACR_USERNAME=$(terraform output -raw acr_username)" >> $GITHUB_ENV
+        echo "ACR_PASSWORD=$(terraform output -raw acr_password)" >> $GITHUB_ENV
+        echo "VM_PUBLIC_IP=$(terraform output -raw frontend_backend_public_ip)" >> $GITHUB_ENV
+      working-directory: terraform
+
+    - name: Login to ACR
+      uses: azure/docker-login@v2
+      with:
+        login-server: ${{ env.ACR_LOGIN_SERVER }}
+        username: ${{ env.ACR_USERNAME }}
+        password: ${{ env.ACR_PASSWORD }}
+
+    - name: Configure ACR Secret in Kubernetes
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          kubectl delete secret acr-secret --ignore-not-found  # Remove existing secret if any
+          kubectl create secret docker-registry acr-secret \
+            --docker-server=${{ env.ACR_LOGIN_SERVER }} \
+            --docker-username=${{ env.ACR_USERNAME }} \
+            --docker-password=${{ env.ACR_PASSWORD }} \
+            --docker-email=old_user_1468642@seneca-caa900naa.cloudlabs.ai
+        EOF
+
+    - name: Replace Variables in YAML Files
+      run: |
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|<ACR_LOGIN_SERVER>|${{ env.ACR_LOGIN_SERVER }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<MONGODB_URI>|${{ secrets.MONGODB_URI }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<JWT_SECRET>|${{ secrets.JWT_SECRET }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-backend.yaml
+        sed -i "s|<VM_PUBLIC_IP>|${{ env.VM_PUBLIC_IP }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-frontend.yaml
+        sed -i "s|latest|${{ env.IMAGE_TAG }}|g" k8s/deployment-backend.yaml
+
+    - name: Rollback Kubernetes Resources
+      run: |
+        scp -i ~/.ssh/id_rsa k8s/*.yaml azureuser@${{ env.VM_PUBLIC_IP }}:/home/azureuser/
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          kubectl apply -f /home/azureuser/deployment-frontend.yaml
+          kubectl apply -f /home/azureuser/service-frontend.yaml
+          kubectl apply -f /home/azureuser/deployment-backend.yaml
+          kubectl apply -f /home/azureuser/service-backend.yaml
+        EOF
+
+    - name: Confirm Rollback
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@${{ env.VM_PUBLIC_IP }} <<EOF
+          kubectl rollout status deployment/frontend-deployment
+          kubectl rollout status deployment/backend-deployment
+        EOF
