@@ -1,7 +1,7 @@
 # making resource group
 resource "azurerm_resource_group" "frontend_backend_rg" {
   name     = "frontend-backend-rg"
-  location = "East US"
+  location = "East US" 
 }
 
 # Defining and setting a virtual network with subnet
