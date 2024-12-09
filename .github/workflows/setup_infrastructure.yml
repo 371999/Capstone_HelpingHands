@@ -1,6 +1,6 @@
 name: Terraform Setup for Azure 
                   
-on:    
+on:     
   push:            
     branches:         
       - Production
