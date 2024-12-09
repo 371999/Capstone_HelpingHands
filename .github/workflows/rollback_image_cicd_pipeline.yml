@@ -1,6 +1,6 @@
 name: Rollback CI/CD Pipeline
 
-on:
+on: 
   push:
     branches:
       - Production
